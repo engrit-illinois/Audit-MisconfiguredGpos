@@ -1,3 +1,6 @@
+# Documentation home: https://github.com/engrit-illinois/Audit-MisconfiguredGpos
+# By mseng3
+
 function Audit-MisconfiguredGpos {
 	param(
 		[string]$Domain = "ad.uillinois.edu",
