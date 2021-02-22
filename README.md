@@ -33,28 +33,28 @@ These examples do not require `-GetFullReports`.
 <br />
 
 ### Get overall statistics:  
-`$object`  
-Note: `MatchingGposCount` + `MisnamedGposCount` should equal `LinkedGposCount` + `UnlinkedGposCount<Slow|Fast>`.  
+- `$object`  
+- Note: `MatchingGposCount` + `MisnamedGposCount` should equal `LinkedGposCount` + `UnlinkedGposCount<Slow|Fast>`.  
 <br />
 
 ### Get all GPOs which match the given `-DisplayNameQuery` and have zero links:  
-`$object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) } | Select DisplayName`  
+- `$object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) } | Select DisplayName`  
 <br />
 
 ### Get all misnamed GPOs (i.e. linked to the given `-OUDN`, but which do not match the given `-DisplayNameQuery`):  
-`$object.Gpos | Where { ($_._LinksCountFast -gt 0) -and ($_._Matches -eq $false) } | Select DisplayName `  
+- `$object.Gpos | Where { ($_._LinksCountFast -gt 0) -and ($_._Matches -eq $false) } | Select DisplayName `  
 <br />
 
 ### Get all matching GPOs which have both their Computer and User configuration disabled:  
-`$object.Gpos | Where { ($_._Matches -eq $true) -and ($_.GpoStatus -eq "AllSettingsDisabled") } | Select DisplayName`  
+- `$object.Gpos | Where { ($_._Matches -eq $true) -and ($_.GpoStatus -eq "AllSettingsDisabled") } | Select DisplayName`  
 <br />
 
 ### Get all GPOs which have WMI filters:
-`$object.Gpos | Where { $_.WmiFilter -ne $null } | Select DisplayName,WmiFilter`
+- `$object.Gpos | Where { $_.WmiFilter -ne $null } | Select DisplayName,WmiFilter`
 <br />
 
 ### Get all GPOs which have a description matching a given string:
-  - `$object.Gpos | Where { $_.Description -like "*test*" } | Select DisplayName,Description`
+- `$object.Gpos | Where { $_.Description -like "*test*" } | Select DisplayName,Description`
 <br />
 
 ## Examples which are only valid when `-GetFullReports` is specified
@@ -62,18 +62,18 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 <br />
 
 ### Get all matching GPOs which have links, but all links are disabled:  
-`$object.Gpos | Where { $_._AllLinksDisabled -eq $true } | Select DisplayName`  
+- `$object.Gpos | Where { $_._AllLinksDisabled -eq $true } | Select DisplayName`  
 <br />
 
 ### Get all matching GPOs which have links, but at least one link is disabled:  
-`$object.Gpos | Where { $_._SomeLinksDisabled -eq $true } | Select DisplayName`  
+- `$object.Gpos | Where { $_._SomeLinksDisabled -eq $true } | Select DisplayName`  
 <br />
 
 ### Get all matching GPOs which have User settings enabled, but have none defined:
-WIP
+- WIP
 
 ### Get all matching GPOs which have Computer settings defined, but disabled:
-WIP
+- WIP
 
 ### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
 ```powershell
@@ -91,13 +91,13 @@ The following examples may be run independently of `Audit-MisconfiguredGpos`, an
 <br />
 
 ### Disable User and Computer settings on GPOs where they are enabled, but not configured:
-WIP
+- WIP
 <br />
 
 ### Remove GPOs named like "*X*", but exclude certain GPOs:
-Note: At UIUC, we (edge IT) don't actually create or remove GPOs, as that is done centrally. This scenario is provided primarily as an example of how to exclude GPOs.
+- Note: At UIUC, we (edge IT) don't actually create or remove GPOs, as that is done centrally. This scenario is provided primarily as an example of how to exclude GPOs.
 
-<details>
+- <details>
 <summary><i>Click to expand</i></summary>
 
 ```powershell
