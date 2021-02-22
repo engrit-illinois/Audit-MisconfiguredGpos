@@ -395,9 +395,134 @@ function Audit-MisconfiguredGpos {
 		$object
 	}
 	
+	function Get-SettingsEnabled($type, $gpo) {
+		# There's two ways to determine this
+		# From the GPO object itself
+		$fastResult = "unknown"
+		# And from the GPO report's GPO.User.Enabled or GPO.Computer.Enabled property
+		$slowResult = "unknown"
+		
+		# Determine result from GPO object itself
+		switch($type) {
+			"User" {
+				switch($gpo.GpoStatus) {
+					"AllSettingsEnabled" { $fastResult = $true }
+					"UserSettingsDisabled" { $fastResult = $false }
+					"ComputerSettingsDisabled" { $fastResult = $true }
+					"AllSettingsDisabled" { $fastResult = $false }
+					Default { Quit "GPO with invalid GpoStatus property sent to Get-SettingsStatus(): `"$($gpo.DisplayName)`"!" }
+				}
+			}
+			"Computer" {
+				switch($gpo.GpoStatus) {
+					"AllSettingsEnabled" { $fastResult = $true }
+					"UserSettingsDisabled" { $fastResult = $true }
+					"ComputerSettingsDisabled" { $fastResult = $false }
+					"AllSettingsDisabled" { $fastResult = $false }
+					Default { Quit "GPO with invalid GpoStatus property sent to Get-SettingsStatus(): `"$($gpo.DisplayName)`"!" }
+				}
+			}
+			Default { Quit "Invalid $type sent to Get-SettingsStatus(): `"$type`"!" }
+		}
+		
+		# If we have the report, also determine result from that
+		if($GetFullReports) {
+			switch($type) {
+				"User" {
+					$slowResult = $false
+					if($gpo._Report.GPO.User.Enabled -eq "true") {
+						$slowResult = $true
+					}
+				}
+				"Computer" {
+					$slowResult = $false
+					if($gpo._Report.GPO.Computer.Enabled -eq "true") {
+						$slowResult = $true
+					}
+				}
+				Default { Quit "Invalid $type sent to Get-SettingsStatus(): `"$type`"!" }
+			}
+			
+			# If we have both results, compare them for a sanity check
+			if($fastResult -ne $slowResult) {
+				Quit "A GPO's `"$type`" settings status could not be determined, because the GPO object and the GPO report disagree: `"$($gpo.DisplayName)`"!"
+			}
+		}
+		
+		# If we've gotten this far, then either we don't have the GPO report to compare, or $fastResult = $slowResult
+		$fastResult
+	}
+	
 	function Mark-UnconfiguredSettingsGpos($object) {
+		log "Indentifying GPOs which have no User or Computer settings configured..."
+		if($GetFullReports) {
+			
+			$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
+			
+			$computerSettingsEnabledButNotConfiguredGposCount = 0
+			$computerSettingsConfiguredButNotEnabledGposCount = 0
+			$userSettingsEnabledButNotConfiguredGposCount = 0
+			$userSettingsConfiguredButNotEnabledGposCount = 0
+			
+			$i = 0
+			foreach($gpo in $object.Gpos) {
+				if($gpo._Matches -eq $true) {
+					$i += 1
+					log "Identifying for GPO #$i/$($matchingGposCount): `"$($gpo.DisplayName)`"..." -L 1 -V 1
+					
+					$computerSettingsConfigured = $true
+					if($gpo._Report.GPO.Computer.ExtensionData -eq $null) {
+						$computerSettingsConfigured = $false
+					}
+					addm "_ComputerSettingsConfigured" $computerSettingsConfigured $gpo $true
+					log "_ComputerSettingsConfigured: `"$computerSettingsConfigured`"." -L 2 -V 2
+					
+					$userSettingsConfigured = $true
+					if($gpo._Report.GPO.User.ExtensionData -eq $null) {
+						$userSettingsConfigured = $false
+					}
+					addm "_UserSettingsConfigured" $userSettingsConfigured $gpo $true
+					log "_UserSettingsConfigured: `"$userSettingsConfigured`"." -L 2 -V 2
+					
+					$computerSettingsEnabled = Get-SettingsEnabled "Computer" $gpo
+					log "Computer settings enabled: `"$computerSettingsEnabled`"."
+					
+					$userSettingsEnabled = Get-SettingsEnabled "User" $gpo
+					log "User settings enabled: `"$userSettingsEnabled`"."
+					
+					if(($computerSettingsEnabled) -and (!$computerSettingsConfigured)) {
+						$computerSettingsEnabledButNotConfiguredGposCount += 1
+						log "This GPO has Computer settings enabled but not configured!" -L 2 -V 2
+					}
+					
+					if(($computerSettingsConfigured) -and (!$computerSettingsEnabled)) {
+						$computerSettingsConfiguredButNotEnabledGposCount += 1
+						log "This GPO has Computer settings configured but not enabled!" -L 2 -V 2
+					}
+					
+					if(($userSettingsEnabled) -and (!$userSettingsConfigured)) {
+						$userSettingsEnabledButNotConfiguredGposCount += 1
+						log "This GPO has User settings enabled but not configured!" -L 2 -V 2
+					}
+					
+					if(($userSettingsConfigured) -and (!$userSettingsEnabled)) {
+						$userSettingsConfiguredButNotEnabledGposCount += 1
+						log "This GPO has User settings configured but not enabled!" -L 2 -V 2
+					}
+				}
+			}
+		}
+		else {
+			$computerSettingsEnabledButNotConfiguredGposCount = "-GetFullReports was not specified."
+			$computerSettingsConfiguredButNotEnabledGposCount = "-GetFullReports was not specified."
+			$userSettingsEnabledButNotConfiguredGposCount = "-GetFullReports was not specified."
+			$userSettingsConfiguredButNotEnabledGposCount = "-GetFullReports was not specified."
+		}
 		
-		
+		addm "ComputerSettingsEnabledButNotConfiguredGposCount" $computerSettingsEnabledButNotConfiguredGposCount $object
+		addm "ComputerSettingsConfiguredButNotEnabledGposCount" $computerSettingsConfiguredButNotEnabledGposCount $object
+		addm "UserSettingsEnabledButNotConfiguredGposCount" $userSettingsEnabledButNotConfiguredGposCount $object
+		addm "UserSettingsConfiguredButNotEnabledGposCount" $userSettingsConfiguredButNotEnabledGposCount $object
 		
 		$object
 	}
@@ -422,7 +547,7 @@ function Audit-MisconfiguredGpos {
 	}
 	
 	function Quit($msg) {
-		log $msg -Red
+		log $msg -E
 		throw $msg
 		Exit $msg
 	}
@@ -445,6 +570,10 @@ function Audit-MisconfiguredGpos {
 			AllLinksDisabledGposCount,
 			MisnamedGposCount,
 			BothSettingsDisabledGposCount,
+			ComputerSettingsEnabledButNotConfiguredGposCount,
+			ComputerSettingsConfiguredButNotEnabledGposCount,
+			UserSettingsEnabledButNotConfiguredGposCount,
+			UserSettingsConfiguredButNotEnabledGposCount,
 			Gpos,
 			Ous,
 			AllGpoLinks,

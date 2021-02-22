@@ -69,11 +69,13 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 - `$object.Gpos | Where { $_._SomeLinksDisabled -eq $true } | Select DisplayName`  
 <br />
 
-### Get all matching GPOs which have User settings enabled, but have none defined:
-- WIP
+### Get all matching GPOs which have User settings enabled, but have none configured:
+- `$object.Gpos | Where { ($_.User.Enabled -eq "true") -and ($_._UserSettingsConfigured -eq $false) } | Select DisplayName`
+<br />
 
-### Get all matching GPOs which have Computer settings defined, but disabled:
-- WIP
+### Get all matching GPOs which have Computer settings configured, but disabled:
+- `$object.Gpos | Where { ($_._ComputerSettingsConfigured -eq $true) -and ($_.Computer.Enabled -eq "false") } | Select DisplayName`
+<br />
 
 ### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
 ```powershell
@@ -220,10 +222,10 @@ The object returned by the script has the following structure:
   - AllLinksDisabledGposCount: Total number of GPOs which have links where all links are disabled (calculated via slow method, only when `-GetFullReports` is specified).
   - MisnamedGposCount: Total number of GPOs which have at least one link, but whose DisplayName does _not_ match the given `-DisplayNameFilter`.
   - BothSettingsDisabledGposCount: Total number of GPOs which have both their Computer and User settings disabled.
-  - WIP: ComputerSettingsEnabledButNotConfiguredGposCount: Total number of GPOs which have Computer configuration settings enabled, but have no such settings defined.
-  - WIP: ComputerSettingsConfiguredButNotEnabledGposCount: Total number of GPOs which have Computer configuration settings configured, but have them disabled.
-  - WIP: UserSettingsEnabledButNotConfiguredGposCount: Total number of GPOs which have User configuration settings enabled, but have no such settings defined.
-  - WIP: UserSettingsConfiguredButNotEnabledGposCount: Total number of GPOs which have User configuration settings configured, but have them disabled.
+  - ComputerSettingsEnabledButNotConfiguredGposCount: Total number of GPOs which have Computer configuration settings enabled, but have no such settings defined.
+  - ComputerSettingsConfiguredButNotEnabledGposCount: Total number of GPOs which have Computer configuration settings configured, but have them disabled.
+  - UserSettingsEnabledButNotConfiguredGposCount: Total number of GPOs which have User configuration settings enabled, but have no such settings defined.
+  - UserSettingsConfiguredButNotEnabledGposCount: Total number of GPOs which have User configuration settings configured, but have them disabled.
   - Gpos: Array of all GPOs.
   - Ous: Array of all OUs under (and including) the given `-OUDN`.
   - AllGpoLinks: Flat array of all GPO links on the discovered OUs, including duplicated (i.e. where GPOs are linked to more than one OU).
