@@ -485,10 +485,10 @@ function Audit-MisconfiguredGpos {
 					log "_UserSettingsConfigured: `"$userSettingsConfigured`"." -L 2 -V 2
 					
 					$computerSettingsEnabled = Get-SettingsEnabled "Computer" $gpo
-					log "Computer settings enabled: `"$computerSettingsEnabled`"."
+					log "Computer settings enabled: `"$computerSettingsEnabled`"." -L 2 -V 2
 					
 					$userSettingsEnabled = Get-SettingsEnabled "User" $gpo
-					log "User settings enabled: `"$userSettingsEnabled`"."
+					log "User settings enabled: `"$userSettingsEnabled`"." -L 2 -V 2
 					
 					if(($computerSettingsEnabled) -and (!$computerSettingsConfigured)) {
 						$computerSettingsEnabledButNotConfiguredGposCount += 1
