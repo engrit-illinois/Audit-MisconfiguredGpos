@@ -97,7 +97,7 @@ The following examples may be run independently of `Audit-MisconfiguredGpos`, an
 ### Remove GPOs named like "*X*", but exclude certain GPOs:
 - Note: At UIUC, we (edge IT) don't actually create or remove GPOs, as that is done centrally. This scenario is provided primarily as an example of how to exclude GPOs.
 
-- <details>
+<details>
 <summary><i>Click to expand</i></summary>
 
 ```powershell
