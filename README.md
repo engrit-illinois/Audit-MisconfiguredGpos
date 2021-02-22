@@ -1,5 +1,4 @@
 # Summary
-
 A script to find GPOs which have no links, or have other undesirable configurations.  
 
 The script will return a Powershell object containing an array of GPO objects, along with custom properties identifying which/how many GPOs have potentially undesirable configurations.
@@ -15,14 +14,12 @@ Table of contents:
 <br />
 
 # Usage
-
 1. Download `Audit-MisconfiguredGpos.psm1`.
 2. Import it as a module: `Import-Module "c:\path\to\Audit-MisconfiguredGpos.psm1"`.
 3. Run the module as your SU account, using the examples and parameter documentation provided below.
 <br />
  
 # Examples
-
 It's recommended to capture the output to a variable, and select for the data you want, e.g.:  
 `$object = Audit-MisconfiguredGpos` or `$object = Audit-MisconfiguredGpos -GetFullReports`
 
@@ -32,7 +29,6 @@ See the [Output](#Output) section below for more details on the structure of the
 <br />
 
 ## Examples which are always valid
-
 These examples do not require `-GetFullReports`.
 <br />
 
@@ -62,7 +58,6 @@ Note: `MatchingGposCount` + `MisnamedGposCount` should equal `LinkedGposCount` +
 <br />
 
 ## Examples which are only valid when `-GetFullReports` is specified
-
 These examples rely on data only gathered when `-GetFullReports` is specified.
 <br />
 
@@ -90,20 +85,17 @@ $object.UnlinkedGposCountSlow
 <br />
 
 ## Examples of remediation
-
 :warning: `Audit-MisconfiguredGpos` does NOT make ANY changes to AD. It is meant solely for gathering information to inform your decisions and actions. After using it to gather a list of GPOs you want to take action on, you should review those GPOs to ensure they should actually be changed, before taking any action.  
 
 The following examples may be run independently of `Audit-MisconfiguredGpos`, and are provided for convenient reference.  
 <br />
 
 ### Disable User and Computer settings on GPOs where they are enabled, but not configured:
-
 WIP
 <br />
 
 ### Remove GPOs named like "*X*", but exclude certain GPOs:
-
-Note: At UIUC, we don't actually create or remove GPOs, as that is done centrally. This scenario is provided primarily as an example of how to exclude GPOs.
+Note: At UIUC, we (edge IT) don't actually create or remove GPOs, as that is done centrally. This scenario is provided primarily as an example of how to exclude GPOs.
 
 <details>
 <summary><i>Click to expand</i></summary>
@@ -211,7 +203,6 @@ Specify `2` for even more verbose logging.
 # Output
 
 ### The parent object
-
 To see the overall structure of the returned object, simply output it: `$object`.  
 
 The object returned by the script has the following structure:  
@@ -244,7 +235,6 @@ The object returned by the script has the following structure:
 <br />
 
 ### GPO objects
-
 To see a specific GPO object (one of many in the `$object.Gpos` array), you can use e.g.:  
 `$object.Gpos | Where { $_.DisplayName -like "*ENGR US Administra*" } | Select *`  
 ` | Select *` is needed to see the additional custom properties added by the script, because GPO objects are a built-in type of object which only show their normal properties by default. These custom properties are prepended with `_`.  
@@ -285,7 +275,6 @@ To see a specific GPO object (one of many in the `$object.Gpos` array), you can 
 <br />
 
 ### User and Computer configuration objects
-
 <details>
 <summary><i>Click to expand</i></summary>
 
@@ -298,7 +287,6 @@ This is leveraged to identify GPOs which:
 <br />
 
 # Notes
-
 - You can run this as your non-SU account, but you may recieve some errors when the script tries to gather data about campus-level GPOs.
 - Potential improvements:
   - Poll GPO reports for GPOs which have Computer/User settings enabled, but which don't actually have any such settings configured.
