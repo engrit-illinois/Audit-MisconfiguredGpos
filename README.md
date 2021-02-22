@@ -289,7 +289,5 @@ This is leveraged to identify GPOs which:
 <br />
 
 # Notes
-- You can run this as your non-SU account, but you may recieve some errors when the script tries to gather data about campus-level GPOs.
-- Potential improvements:
-  - Poll GPO reports for GPOs which have Computer/User settings enabled, but which don't actually have any such settings configured.
+- You can run this as your non-SU account, but you may recieve some errors when the script tries to gather data about campus-level GPO.
 - By mseng3. See my other projects here: https://github.com/mmseng/code-compendium.
