@@ -123,6 +123,7 @@ $misconfiguredGpos | ForEach-Object {
 	# Apparently there are no native Powershell cmdlets which directly edit such GPO settings.
 	# So we'll have to export the GPOs (we already have their GPO report in XML format),
 	# edit the XML, and then import it, overwriting the GPO's settings. Ugh.
+	# This will require some thorough testing.
 }
 ```
 </details>
