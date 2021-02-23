@@ -89,11 +89,43 @@ $object.UnlinkedGposCountSlow
 ## Examples of remediation
 :warning: `Audit-MisconfiguredGpos` does NOT make ANY changes to AD. It is meant solely for gathering information to inform your decisions and actions. After using it to gather a list of GPOs you want to take action on, you should review those GPOs to ensure they should actually be changed, before taking any action.  
 
-The following examples may be run independently of `Audit-MisconfiguredGpos`, and are provided for convenient reference.  
+The following examples are only provided as a reference, and should *NOT* be run without modification or a full understanding of the code.  
 <br />
 
-### Disable User and Computer settings on GPOs where they are enabled, but not configured:
-- WIP
+### Disable User or Computer settings on GPOs where they are enabled, but not configured:
+
+WIP
+
+One of the most common issues we see with GPOs is when somebody makes a new GPO, configures the Computer settings on it, has no need for the User settings, but leaves the User settings enabled. While this is not technically _problem_, it is an inefficiency, causing extra group policy processing work for computers when somebody logs in. When there is a lot of GPOs to process, this inefficiency adds up and causes logins to take far longer than they need to. Best practice is to always disable whichever settings sections are unused on a GPO.
+
+This example uses `Audit-MisconfiguredGpos` to identify GPOs with this misconfiguration, and shows how to disable the appropriate settings section on all the GPOs, in bulk. A similar thing can be done for GPOs with misconfigured Computer settings as well, with a few tweaks.
+
+<details>
+<summary><i>Click to expand</i></summary>
+
+```powershell
+# Get all the data
+$object = Audit-MisconfiguredGpos -GetFullReports
+
+# Select all GPOs which have User settings enabled but not configured.
+$misconfiguredGpos = $object.Gpos | Where { ($_.User.Enabled -eq "true") -and ($_._UserSettingsConfigured -eq $false) }
+
+# Print the list of the GPOs in question:
+$misconfiguredGpos | Select DisplayName
+
+# You should indepentently check these GPOs to make sure you do indeed want to edit them!
+
+# Disable User settings on the misconfigured GPOs
+$misconfiguredGpos | ForEach-Object {
+	Write-Host "Disabling User settings on GPO: `"$($_.DisplayName)`"..."
+	
+	# This part of this example is a work in progress
+	# Apparently there are no native Powershell cmdlets which directly edit such GPO settings.
+	# So we'll have to export the GPOs (we already have their GPO report in XML format),
+	# edit the XML, and then import it, overwriting the GPO's settings. Ugh.
+}
+```
+</details>
 <br />
 
 ### Remove GPOs named like "*X*", but exclude certain GPOs:
@@ -127,7 +159,10 @@ $gposToRemove.count # Outputs 9
 $gposToRemove | Select DisplayName
 
 # Now you can remove the remaining test GPOs:
-$gposToRemove | ForEach-Object { Write-Host "Removing GPO: `"$($_.DisplayName)`""; Remove-GPO -Name $_.DisplayName }
+$gposToRemove | ForEach-Object {
+	Write-Host "Removing GPO: `"$($_.DisplayName)`"..."
+	Remove-GPO -Name $_.DisplayName
+}
 ```
 </details>
 <br />
