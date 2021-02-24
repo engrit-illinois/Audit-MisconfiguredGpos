@@ -328,4 +328,5 @@ This is leveraged to identify GPOs which:
 
 # Notes
 - You can run this as your non-SU account, but you may recieve some errors when the script tries to gather data about campus-level GPOs.
+- If you want something far more powerful and far-reaching, also check out [GPOZaurr](https://www.reddit.com/r/PowerShell/comments/l42lc2/the_only_command_you_will_ever_need_to_understand/).
 - By mseng3. See my other projects here: https://github.com/mmseng/code-compendium.
