@@ -195,7 +195,9 @@ This takes significantly longer, about 1 extra second for every 2 matching GPOs.
 However this allows for gathering additional data:
   - A second check for which GPOs are unlinked.
   - Whether each matching GPO has any _disabled_ links, and whether _all_ of a given GPO's links are disabled.
-  - A tally of how many matching GPOs have _some_ disabled links, and how many have _all_ of their links disabled.
+    - A tally of how many such GPOs were found.
+  - Whether each matching GPO has User or Computer settings enabled but not configured, or configured but not enabled.
+    - A tally of how many such GPOs were found.
 
 ### -Csv
 Optional string.  
