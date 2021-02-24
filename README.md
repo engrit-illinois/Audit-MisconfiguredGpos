@@ -33,7 +33,7 @@ These examples do not require `-GetFullReports`.
 <br />
 
 ### Get overall statistics:  
-- `$object`  
+- `$object` (i.e. just output the returned object)
 - Note: `MatchingGposCount` + `MisnamedGposCount` should equal `LinkedGposCount` + `UnlinkedGposCount<Slow|Fast>`.  
 <br />
 
