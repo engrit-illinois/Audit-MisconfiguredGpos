@@ -29,7 +29,7 @@ See the [Output](#Output) section below for more details on the structure of the
 <br />
 
 ## Examples which are always valid
-These examples do not require `-GetFullReports`.
+These examples do not require `-GetFullReports` to be specified.
 <br />
 
 ### Get overall statistics:  
@@ -325,5 +325,5 @@ This is leveraged to identify GPOs which:
 <br />
 
 # Notes
-- You can run this as your non-SU account, but you may recieve some errors when the script tries to gather data about campus-level GPO.
+- You can run this as your non-SU account, but you may recieve some errors when the script tries to gather data about campus-level GPOs.
 - By mseng3. See my other projects here: https://github.com/mmseng/code-compendium.
