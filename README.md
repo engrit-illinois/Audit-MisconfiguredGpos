@@ -3,6 +3,13 @@ A script to find GPOs which have no links, or have other undesirable configurati
 
 The script will return a Powershell object containing an array of GPO objects, along with custom properties identifying which/how many GPOs have potentially undesirable configurations.
 
+Misconfigurations detected:
+- GPOs which have zero links
+- GPOs with names which do not match a given wildcard query
+- GPOs with Computer or User settings which are configured but not enabled, or vice versa
+- GPOs with disabled links
+- GPOs which have Computer or User settings (or both) which are identical to other GPOs
+
 The script will optionally log all progress to a log file, to the console, and/or export the results to a CSV file.  
 
 Table of contents:
