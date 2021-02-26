@@ -288,7 +288,7 @@ The object returned by the script has the following structure:
 ### GPO objects
 To see a specific GPO object (one of many in the `$object.Gpos` array), you can use e.g.:  
 `$object.Gpos | Where { $_.DisplayName -like "*ENGR US Administra*" } | Select *`  
-` | Select *` is needed to see the additional custom properties added by the script, because GPO objects are a built-in type of object which only show their normal properties by default. These custom properties are prepended with `_`.  
+` | Select *` is needed to see the additional custom properties added by the script, because GPO objects are a built-in type of object which only show their normal properties by default. These custom properties are prepended with `_` to distinguish them from the built-in GPO object properties.  
 
 [GPO objects](https://docs.microsoft.com/en-us/previous-versions/windows/desktop/wmi_v2/class-library/gpo-class-microsoft-grouppolicy) have the following structure:  
 
