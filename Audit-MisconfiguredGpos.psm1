@@ -8,7 +8,6 @@ function Audit-MisconfiguredGpos {
         [string]$OUDN = "OU=Engineering,OU=Urbana,DC=ad,DC=uillinois,DC=edu",
 		
 		[switch]$GetFullReports,
-		[switch]$GetDuplicates,
 		
 		# ":ENGRIT:" will be replaced with "c:\engrit\logs\$($MODULE_NAME)_:TS:.csv"
 		# ":TS:" will be replaced with start timestamp
@@ -635,31 +634,24 @@ function Audit-MisconfiguredGpos {
 	function Mark-DuplicateGpos($object) {
 		log "Indentifying duplicate GPOs (i.e. which have identical settings configured)..."
 		if($GetFullReports) {
-			if($GetDuplicates) {
-				$object = addm "DuplicateComputerGposCount" 0 $object
-				$object = addm "DuplicateUserGposCount" 0 $object
-				$object = addm "DuplicateBothGposCount" 0 $object
-				
-				$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
-				log "Looping through GPOs..." -L 1 -V 1
-				$i = 0
-				foreach($gpo in $object.Gpos) {
-					if($gpo._Matches -eq $true) {
-						$i += 1
-						log "Identifying for GPO #$i/$($matchingGposCount): `"$($gpo.DisplayName)`"..." -L 2 -V 1
-						$object = Mark-DuplicateGpo $object $gpo
-					}
+			$object = addm "DuplicateComputerGposCount" 0 $object
+			$object = addm "DuplicateUserGposCount" 0 $object
+			$object = addm "DuplicateBothGposCount" 0 $object
+			
+			$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
+			log "Looping through GPOs..." -L 1 -V 1
+			$i = 0
+			foreach($gpo in $object.Gpos) {
+				if($gpo._Matches -eq $true) {
+					$i += 1
+					log "Identifying for GPO #$i/$($matchingGposCount): `"$($gpo.DisplayName)`"..." -L 2 -V 1
+					$object = Mark-DuplicateGpo $object $gpo
 				}
-				
-				log "Found $($object.DuplicateComputerGposCount) GPOs with Computer settings which duplicate those of other GPOs." -L 1
-				log "Found $($object.DuplicateUserGposCount) GPOs with User settings which duplicate those of other GPOs." -L 1
-				log "Found $($object.DuplicateBothGposCount) GPOs with Computer AND User settings which duplicate those of other GPOs." -L 1
 			}
-			else {
-				$object = addm "DuplicateComputerGposCount" "-GetDuplicates was not specified." $object
-				$object = addm "DuplicateUserGposCount" "-GetDuplicates was not specified." $object
-				$object = addm "DuplicateBothGposCount" "-GetDuplicates was not specified." $object
-			}
+			
+			log "Found $($object.DuplicateComputerGposCount) GPOs with Computer settings which duplicate those of other GPOs." -L 1
+			log "Found $($object.DuplicateUserGposCount) GPOs with User settings which duplicate those of other GPOs." -L 1
+			log "Found $($object.DuplicateBothGposCount) GPOs with Computer AND User settings which duplicate those of other GPOs." -L 1
 		}
 		else {
 			$object = addm "DuplicateComputerGposCount" "-GetFullReports was not specified." $object
