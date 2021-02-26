@@ -1,5 +1,5 @@
 # Summary
-A script to find GPOs which have no links, or have other potentially undesirable configurations.  
+A script to find Active Directory Group Policy Objects (GPOs) which have no links, or have other potentially undesirable configurations.  
 
 The script will return a Powershell object containing an array of GPO objects, along with custom properties identifying which/how many GPOs have potentially undesirable configurations.
 
