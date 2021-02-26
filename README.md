@@ -77,6 +77,12 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 - `$object.Gpos | Where { ($_._ComputerSettingsConfigured -eq $true) -and ($_.Computer.Enabled -eq "false") } | Select DisplayName`
 <br />
 
+### Get all matching GPOs which have settings that are identical to settings in other GPOs:
+- Find GPOs with duplicate Computer settings: `$object.Gpos | Where { $_._DuplicateComputerGpos } | Select DisplayName,_DuplicateComputerGpos`
+- Find GPOs with duplicate User settings: `$object.Gpos | Where { $_._DuplicateUserGpos } | Select DisplayName,_DuplicateUserGpos`
+- Find GPOs with both duplicate Computer and User settings: `$object.Gpos | Where { $_._DuplicateBothGpos } | Select DisplayName,_DuplicateBothGpos
+<br />
+
 ### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
 ```powershell
 $object.UnlinkedGposCountFast
@@ -188,7 +194,7 @@ Default is `OU=Engineering,OU=Urbana,DC=ad,DC=uillinois,DC=edu`.
 ### -GetFullReports
 Optional switch.  
 If specified, a full GPO report will be retrieved for each matching GPO.  
-This takes significantly longer, about 1 extra second for every 2 matching GPOs. For all GPOs matching `ENGR*` this takes about 12 minutes, versus 2 minutes if `-GetFullReports` is omitted.  
+This takes significantly longer, about 1 extra second for every 2 matching GPOs. For all GPOs matching `ENGR*` this takes about 15 minutes, versus 2 minutes if `-GetFullReports` is omitted.  
   - When `-GetFullReports` is omitted, the script gathers a list of all GPOs matching `-DisplayNameFilter`, and a list of GPOs linked to all OUs under `-OUDN`, and takes the difference to determine which GPOs are unlinked. This is faster because no GPO reports must be retrieved.
   - When `-GetFullReports` is specified, the script takes a more traditional approach. It gets the full GPO report for each GPO matching `-DisplayNameFilter`, and uses the GPO report data to determine whether they have any links.
 
@@ -196,17 +202,10 @@ However this allows for gathering additional data:
   - A second check for which GPOs are unlinked.
   - Whether each matching GPO has any _disabled_ links, and whether _all_ of a given GPO's links are disabled.
     - A tally of how many such GPOs were found.
-  - Whether each matching GPO has User or Computer settings enabled but not configured, or configured but not enabled.
+  - Whether each matching GPO has Computer or User settings enabled but not configured, or configured but not enabled.
     - A tally of how many such GPOs were found.
-
-### -GetDuplicates
-Optional switch.  
-Ignored if `-GetFullReports` is not specified.  
-If specified, the full GPO reports of matching GPOs will be parsed to identify GPOs which have identical settings.  
-This individually checks each matching GPO against each other matching GPO and compares their Computer settings and User settings.  
-As such, this can take a while.  
-Each GPO will be given a `_DuplicateComputerGpos`, `_DuplicateUserGpos`, and `_DuplicateBothGpos` property, which contain an array of the DisplayNames of the other GPOs which have settings that duplicate the settings in the respective section of the GPO.  
-An overall count of the different kinds of duplicate GPOs is also added to the returned object, along with the other counts.  
+  - Whether each matching GPO has Computer of User settings which are identical to other matching GPOs.
+    - A tally of how many such GPOs were found.
 
 ### -Csv
 Optional string.  
@@ -299,16 +298,31 @@ To see a specific GPO object (one of many in the `$object.Gpos` array), you can 
 - GPO object
   - \_Matches: A boolean representing whether or not this GPO's DisplayName property matches the given `-DisplayNameFilter`.
   - \_LinksCountFast: The number of links this GPO has across all OUs under (and including) the given `-OUDN`.
-  - \_Report: The full GPO report, in the format of a Powershell XML object, as returned by `Get-GPOReport -Guid $guid -ReportType "XML"`. Only present when `-GetFullReports` is specified, and only on GPOs where `_Matches -eq $true`.
+  - \_Report: The full GPO report, in the format of a Powershell XML object, as returned by `Get-GPOReport -Guid $guid -ReportType "XML"`.
+    - Only present when `-GetFullReports` is specified, and only on GPOs where `_Matches -eq $true`.
   - \_LinksCountSlow: The number of links this GPO has according to its `_Report`. Only present when `-GetFullReports` is specified.
-  - \_SomeLinksDisabled: A boolean representing whether or not this GPO has one or more links which are disabled. Simply calculated from the data in `_Report` for more convenient searchability. Only present when `-GetFullReports` is specified.
+  - \_SomeLinksDisabled: A boolean representing whether or not this GPO has one or more links which are disabled.
+    - Simply calculated from the data in `_Report` for more convenient searchability.
+	- Only present when `-GetFullReports` is specified.
     - Roughly equivalent to `($gpo._Report.GPO.LinksTo.Enabled) -contains "false"`.
-  - \_AllLinksDisabled: A boolean representing whether or not all of this GPO's links are disabled. Simply calculated from the data in `_Report` for more convenient searchability. Only present when `-GetFullReports` is specified.
+  - \_AllLinksDisabled: A boolean representing whether or not all of this GPO's links are disabled.
+    - Simply calculated from the data in `_Report` for more convenient searchability.
+    - Only present when `-GetFullReports` is specified.
     - Roughly equivalent to `$unique = ($gpo._Report.GPO.LinksTo.Enabled | Select -Unique); ($unique.count -eq 1) -and ($unique -contains "false")`.
-  - \_ComputerSettingsConfigured: A boolean representing whether or not this GPO has any Computer configuration settings defined. Calculated from data in `_Report` for more convenient searchability. Only present when `-GetFullReports` is specified.
+  - \_ComputerSettingsConfigured: A boolean representing whether or not this GPO has any Computer configuration settings defined.
+    - Calculated from data in `_Report` for more convenient searchability.
+	- Only present when `-GetFullReports` is specified.
     - Equivalent to `$gpo._Report.GPO.Computer.ExtensionData -eq $null`.
-  - \_UserSettingsConfigured: A boolean representing whether or not this GPO has any User configuration settings defined. Calculated from data in `_Report` for more convenient searchability. Only present when `-GetFullReports` is specified.
+  - \_UserSettingsConfigured: A boolean representing whether or not this GPO has any User configuration settings defined.
+    - Calculated from data in `_Report` for more convenient searchability.
+	- Only present when `-GetFullReports` is specified.
     - Equivalent to `$gpo._Report.GPO.User.ExtensionData -eq $null`.
+  - \_DuplicateComputerGpos: An array of strings representing the DisplayNames of other GPOs which have identical Computer settings.
+    - Only present when `-GetFullReports` is specified.
+  - \_DuplicateUserGpos: An array of strings representing the DisplayNames of other GPOs which have identical User settings.
+    - Only present when `-GetFullReports` is specified.
+  - \_DuplicateBothGpos: An array of strings representing the DisplayNames of other GPOs which have both identical Computer and User settings.
+    - Only present when `-GetFullReports` is specified.
   - Id: The GPO's GUID (in [UUID format](https://en.wikipedia.org/wiki/Universally_unique_identifier)).
   - DisplayName: The GPO's friendly name.
   - Path: The GPO's distinguished path.
