@@ -8,6 +8,7 @@ function Audit-MisconfiguredGpos {
         [string]$OUDN = "OU=Engineering,OU=Urbana,DC=ad,DC=uillinois,DC=edu",
 		
 		[switch]$GetFullReports,
+		[switch]$GetDuplicates,
 		
 		# ":ENGRIT:" will be replaced with "c:\engrit\logs\$($MODULE_NAME)_:TS:.csv"
 		# ":TS:" will be replaced with start timestamp
@@ -133,8 +134,8 @@ function Audit-MisconfiguredGpos {
 	function Get-RunTime($object) {
 		$endTime = Get-Date
 		$runTime = New-TimeSpan -Start $object.StartTime -End $endTime
-		addm "EndTime" $endTime $object
-		addm "RunTime" $runTime $object
+		$object = addm "EndTime" $endTime $object
+		$object = addm "RunTime" $runTime $object
 		log "Runtime: $runTime"
 		$object
 	}
@@ -144,10 +145,10 @@ function Audit-MisconfiguredGpos {
 		if($adObject) {
 			# This gets me EVERY FLIPPIN TIME:
 			# https://stackoverflow.com/questions/32919541/why-does-add-member-think-every-possible-property-already-exists-on-a-microsoft
-			$object = $object | Add-Member -NotePropertyName $property -NotePropertyValue $value -Force
+			$object | Add-Member -NotePropertyName $property -NotePropertyValue $value -Force
 		}
 		else {
-			$object = $object | Add-Member -NotePropertyName $property -NotePropertyValue $value
+			$object | Add-Member -NotePropertyName $property -NotePropertyValue $value
 		}
 		$object
 	}
@@ -169,11 +170,11 @@ function Audit-MisconfiguredGpos {
 		log "Getting all GPOs..."
 		
 		$gpos = Get-GPO -Domain $Domain -All | Sort DisplayName
-		addm "Gpos" $gpos $object
+		$object = addm "Gpos" $gpos $object
 		
 		$gposCount = count $gpos
 		log "Found $gposCount total GPOs in domain `"$Domain`"." -L 1
-		addm "GposCount" $gposCount $object
+		$object = addm "GposCount" $gposCount $object
 		
 		$object
 	}
@@ -186,12 +187,12 @@ function Audit-MisconfiguredGpos {
 			if($gpo.DisplayName -like $DisplayNameFilter) {
 				$matches = $true
 			}
-			addm "_Matches" $matches $gpo $true
+			$gpo = addm "_Matches" $matches $gpo $true
 		}
 		
 		$count = count ($object.Gpos | Where { $_._Matches -eq $true })
 		log "Found $count matching GPOs." -L 1
-		addm "MatchingGposCount" $count $object
+		$object = addm "MatchingGposCount" $count $object
 		
 		$object
 	}
@@ -201,7 +202,7 @@ function Audit-MisconfiguredGpos {
 		$ous = Get-ADOrganizationalUnit -Filter "Name -like '*'" -SearchBase $OUDN | Sort DistinguishedName
 		$ousCount = count $ous
 		log "Found $ousCount total OUs." -L 2
-		addm "Ous" $ous $object
+		$object = addm "Ous" $ous $object
 		$object
 	}
 	
@@ -214,12 +215,12 @@ function Audit-MisconfiguredGpos {
 		}
 		$linkedGpoGuidsCount = count $linkedGpoGuids
 		log "Found $linkedGpoGuidsCount total (non-unique) GPO links." -L 2
-		addm "AllGpoLinks" $linkedGpoGuids $object
+		$object = addm "AllGpoLinks" $linkedGpoGuids $object
 		
 		$uniqueLinkedGpoGuids = $linkedGpoGuids | Sort -Unique
 		$uniqueLinkedGpoCount = count $uniqueLinkedGpoGuids
 		log "Found $uniqueLinkedGpoCount unique GPO links." -L 2
-		addm "UniqueGpoLinks" $uniqueLinkedGpoGuids $object
+		$object = addm "UniqueGpoLinks" $uniqueLinkedGpoGuids $object
 		
 		$object
 	}
@@ -260,9 +261,10 @@ function Audit-MisconfiguredGpos {
 				log "This GPO is linked $guidLinksCount times." -L 2 -V 2
 				
 				# This is really not needed for anything, and they are all the same anyway
-				#addm "_Links" $guidLinks $gpo $true
+				#$object = addm "_Links" $guidLinks $gpo $true
 				
-				addm "_LinksCountFast" $guidLinksCount $gpo $true
+				$newGpo = addm "_LinksCountFast" $guidLinksCount $gpo $true
+				$object.Gpos | Where { $_.Id -eq $guid } | ForEach { $_ = $newGpo }
 			}
 			else {
 				log "Could not find a GPO with this GUID!" -L 2 -V 1 -E
@@ -273,7 +275,7 @@ function Audit-MisconfiguredGpos {
 		$linkedGpos = $object.Gpos | Where { $_._LinksCountFast -ge 1 }
 		$linkedGposCount = count $linkedGpos
 		log "Found $linkedGposCount linked GPOs." -L 1
-		addm "LinkedGposCount" $linkedGposCount $object
+		$object = addm "LinkedGposCount" $linkedGposCount $object
 		
 		$uniqueLinkedGpos = $linkedGpos | Sort DisplayName -Unique
 		$uniqueLinkedGposCount = count $uniqueLinkedGpos
@@ -308,7 +310,7 @@ function Audit-MisconfiguredGpos {
 		log "Marking unidentified GPOs as unlinked..." -L 1 -V 1
 		foreach($gpo in $object.Gpos) {
 			if($gpo._LinksCountFast -eq $null) {
-				addm "_LinksCountFast" 0 $gpo
+				$gpo = addm "_LinksCountFast" 0 $gpo
 			}
 		}
 		$unlinkedGpos = $object.Gpos | Where { $_._LinksCountFast -eq 0 }
@@ -318,7 +320,7 @@ function Audit-MisconfiguredGpos {
 		$unlinkedMatchingGpos = $object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) }
 		$unlinkedMatchingGposCount = count $unlinkedMatchingGpos
 		log "Found $unlinkedMatchingGposCount matching GPOs with no links." -L 1
-		addm "UnlinkedGposCountFast" $unlinkedMatchingGposCount $object
+		$object = addm "UnlinkedGposCountFast" $unlinkedMatchingGposCount $object
 		
 		$object
 	}
@@ -327,7 +329,6 @@ function Audit-MisconfiguredGpos {
 		log "Getting GPO reports for matching GPOs (this may take several minutes)..." -L 1
 		
 		$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
-		
 		$i = 0
 		foreach($gpo in $object.Gpos) {
 			
@@ -336,7 +337,7 @@ function Audit-MisconfiguredGpos {
 				log "Getting report for GPO #$i/$($matchingGposCount): `"$($gpo.DisplayName)`"..." -L 2 -V 1
 				
 				[xml]$report = $gpo | Get-GPOReport -ReportType "XML"
-				addm "_Report" $report $gpo $true
+				$gpo = addm "_Report" $report $gpo $true
 				
 				$linkCount = count ($report.GPO.LinksTo)
 				log "Found $linkCount links for GPO." -L 3 -V 2
@@ -354,9 +355,9 @@ function Audit-MisconfiguredGpos {
 					}
 				}
 			
-				addm "_LinksCountSlow" $linkCount $gpo $true
-				addm "_SomeLinksDisabled" $someDisabled $gpo $true
-				addm "_AllLinksDisabled" $allDisabled $gpo $true
+				$gpo = addm "_LinksCountSlow" $linkCount $gpo $true
+				$gpo = addm "_SomeLinksDisabled" $someDisabled $gpo $true
+				$gpo = addm "_AllLinksDisabled" $allDisabled $gpo $true
 			}
 		}
 		
@@ -388,9 +389,9 @@ function Audit-MisconfiguredGpos {
 			$allLinksDisabledGposCount = "-GetFullReports was not specified."
 		}
 		
-		addm "UnlinkedGposCountSlow" $unlinkedGposCount $object
-		addm "SomeLinksDisabledGposCount" $someLinksDisabledGposCount $object
-		addm "AllLinksDisabledGposCount" $allLinksDisabledGposCount $object
+		$object = addm "UnlinkedGposCountSlow" $unlinkedGposCount $object
+		$object = addm "SomeLinksDisabledGposCount" $someLinksDisabledGposCount $object
+		$object = addm "AllLinksDisabledGposCount" $allLinksDisabledGposCount $object
 		
 		$object
 	}
@@ -422,7 +423,7 @@ function Audit-MisconfiguredGpos {
 					Default { Quit "GPO with invalid GpoStatus property sent to Get-SettingsStatus(): `"$($gpo.DisplayName)`"!" }
 				}
 			}
-			Default { Quit "Invalid $type sent to Get-SettingsStatus(): `"$type`"!" }
+			Default { Quit "Invalid type sent to Get-SettingsStatus(): `"$type`"!" }
 		}
 		
 		# If we have the report, also determine result from that
@@ -440,7 +441,7 @@ function Audit-MisconfiguredGpos {
 						$slowResult = $true
 					}
 				}
-				Default { Quit "Invalid $type sent to Get-SettingsStatus(): `"$type`"!" }
+				Default { Quit "Invalid type sent to Get-SettingsStatus(): `"$type`"!" }
 			}
 			
 			# If we have both results, compare them for a sanity check
@@ -457,14 +458,13 @@ function Audit-MisconfiguredGpos {
 		log "Indentifying GPOs which have no User or Computer settings configured..."
 		if($GetFullReports) {
 			
-			$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
-			
 			$computerSettingsEnabledButNotConfiguredGposCount = 0
 			$computerSettingsConfiguredButNotEnabledGposCount = 0
 			$userSettingsEnabledButNotConfiguredGposCount = 0
 			$userSettingsConfiguredButNotEnabledGposCount = 0
 			
 			log "Looping through GPOs..." -L 1 -V 1
+			$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
 			$i = 0
 			foreach($gpo in $object.Gpos) {
 				if($gpo._Matches -eq $true) {
@@ -475,14 +475,14 @@ function Audit-MisconfiguredGpos {
 					if($gpo._Report.GPO.Computer.ExtensionData -eq $null) {
 						$computerSettingsConfigured = $false
 					}
-					addm "_ComputerSettingsConfigured" $computerSettingsConfigured $gpo $true
+					$gpo = addm "_ComputerSettingsConfigured" $computerSettingsConfigured $gpo $true
 					log "_ComputerSettingsConfigured: `"$computerSettingsConfigured`"." -L 3 -V 2
 					
 					$userSettingsConfigured = $true
 					if($gpo._Report.GPO.User.ExtensionData -eq $null) {
 						$userSettingsConfigured = $false
 					}
-					addm "_UserSettingsConfigured" $userSettingsConfigured $gpo $true
+					$gpo = addm "_UserSettingsConfigured" $userSettingsConfigured $gpo $true
 					log "_UserSettingsConfigured: `"$userSettingsConfigured`"." -L 3 -V 2
 					
 					$computerSettingsEnabled = Get-SettingsEnabled "Computer" $gpo
@@ -525,10 +525,147 @@ function Audit-MisconfiguredGpos {
 			$userSettingsConfiguredButNotEnabledGposCount = "-GetFullReports was not specified."
 		}
 		
-		addm "ComputerSettingsEnabledButNotConfiguredGposCount" $computerSettingsEnabledButNotConfiguredGposCount $object
-		addm "ComputerSettingsConfiguredButNotEnabledGposCount" $computerSettingsConfiguredButNotEnabledGposCount $object
-		addm "UserSettingsEnabledButNotConfiguredGposCount" $userSettingsEnabledButNotConfiguredGposCount $object
-		addm "UserSettingsConfiguredButNotEnabledGposCount" $userSettingsConfiguredButNotEnabledGposCount $object
+		$object = addm "ComputerSettingsEnabledButNotConfiguredGposCount" $computerSettingsEnabledButNotConfiguredGposCount $object
+		$object = addm "ComputerSettingsConfiguredButNotEnabledGposCount" $computerSettingsConfiguredButNotEnabledGposCount $object
+		$object = addm "UserSettingsEnabledButNotConfiguredGposCount" $userSettingsEnabledButNotConfiguredGposCount $object
+		$object = addm "UserSettingsConfiguredButNotEnabledGposCount" $userSettingsConfiguredButNotEnabledGposCount $object
+		
+		$object
+	}
+	
+	function Mark-DuplicateGpo($object, $gpo) {
+		
+		$duplicateComputerGpos = @()
+		$duplicateUserGpos = @()
+		$duplicateBothGpos = @()
+		
+		$gpoComputerSettings = $gpo._Report.GPO.Computer.ExtensionData
+		$gpoUserSettings = $gpo._Report.GPO.User.ExtensionData
+		
+		if($gpoComputerSettings -or $gpoUserSettings) {
+			$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
+			log "Looping through other GPOs..." -L 2 -V 1
+			$i = 0
+			foreach($thisGpo in $object.Gpos) {
+				if($thisGpo._Matches -eq $true) {
+					$i += 1
+					log "Comparing to GPO #$i/$($matchingGposCount): `"$($thisGpo.DisplayName)`"..." -L 3 -V 1
+					if($thisGpo.DisplayName -eq $gpo.Displayname) {
+						log "This is the same GPO being compared. Skipping." -L 4 -V 2
+					}
+					else {
+						# Compare Computer settings
+						if($gpoComputerSettings) {
+							$thisGpoComputerSettings = $thisGpo._Report.GPO.Computer.ExtensionData
+							if($thisGpoComputerSettings) {
+								if($gpoComputerSettings.InnerXml -eq $thisGpoComputerSettings.InnerXml) {
+									$duplicateComputerGpos += @($thisGpo.DisplayName)
+									log "This GPO has identical Computer settings." -L 4 -V 2
+								}
+								else {
+									log "This GPO does not have identical Computer settings."
+								}
+							}
+							else {
+								log "This GPO has no Computer settings." -L 4 -V 2
+							}
+						}
+						else {
+							log "Base GPO has no Computer settings." -L 4 -V 2
+						}
+						
+						# Compare User settings
+						if($gpoUserSettings) {
+							$thisGpoUserSettings = $thisGpo._Report.GPO.User.ExtensionData
+							if($thisGpoUserSettings) {
+								if($gpoUserSettings.InnerXml -eq $thisGpoUserSettings.InnerXml) {
+									$duplicateUserGpos += @($thisGpo.DisplayName)
+									log "This GPO has identical User settings." -L 4 -V 2
+								}
+								else {
+									log "This GPO does not have identical User settings."
+								}
+							}
+							else {
+								log "This GPO has no User settings." -L 4 -V 2
+							}
+						}
+						else {
+							log "Base GPO has no User settings." -L 4 -V 2
+						}
+						
+						# If both Computer and User settings are identical
+						$duplicateBothSettings = $duplicateComputerSettings -and $duplicateUserSettings
+						if($duplicateBothSettings) {
+							$duplicateBothGpos += @($thisGpo.DisplayName)
+							log "This GPO has identical Computer AND User settings." -L 4 -V 2
+						}
+						else {
+							log "This GPO does not have both identical Computer and User settings."
+						}
+					}
+				}
+			}
+		}
+		else {
+			log "This GPO has no settings." -L 2 -V 1
+		}
+		
+		$duplicateComputerGposCount = count $duplicateComputerGpos
+		if($duplicateComputerGposCount -gt 0) {
+			$gpo = addm "_DuplicateComputerGpos" $duplicateComputerGpos $gpo $true
+			$object.DuplicateComputerGposCount += $duplicateComputerGposCount
+		}
+		
+		$duplicateUserGposCount = count $duplicateUserGpos
+		if($duplicateUserGposCount -gt 0) {
+			$gpo = addm "_DuplicateUserGpos" $duplicateUserGpos $gpo $true
+			$object.DuplicateUserGposCount += $duplicateUserGposCount
+		}
+		
+		$duplicateBothGposCount = count $duplicateBothGpos
+		if($duplicateBothGposCount -gt 0) {
+			$gpo = addm "_DuplicateBothGpos" $duplicateBothGpos $gpo $true
+			$object.DuplicateBothGposCount += $duplicateBothGposCount
+		}
+		
+		$object
+	}
+	
+	function Mark-DuplicateGpos($object) {
+		log "Indentifying duplicate GPOs (i.e. which have identical settings configured)..."
+		if($GetFullReports) {
+			if($GetDuplicates) {
+				$object = addm "DuplicateComputerGposCount" 0 $object
+				$object = addm "DuplicateUserGposCount" 0 $object
+				$object = addm "DuplicateBothGposCount" 0 $object
+				
+				$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
+				log "Looping through GPOs..." -L 1 -V 1
+				$i = 0
+				foreach($gpo in $object.Gpos) {
+					if($gpo._Matches -eq $true) {
+						$i += 1
+						log "Identifying for GPO #$i/$($matchingGposCount): `"$($gpo.DisplayName)`"..." -L 2 -V 1
+						$object = Mark-DuplicateGpo $object $gpo
+					}
+				}
+				
+				log "Found $($object.DuplicateComputerGposCount) GPOs with Computer settings which duplicate those of other GPOs." -L 1
+				log "Found $($object.DuplicateUserGposCount) GPOs with User settings which duplicate those of other GPOs." -L 1
+				log "Found $($object.DuplicateBothGposCount) GPOs with Computer AND User settings which duplicate those of other GPOs." -L 1
+			}
+			else {
+				$object = addm "DuplicateComputerGposCount" "-GetDuplicates was not specified." $object
+				$object = addm "DuplicateUserGposCount" "-GetDuplicates was not specified." $object
+				$object = addm "DuplicateBothGposCount" "-GetDuplicates was not specified." $object
+			}
+		}
+		else {
+			$object = addm "DuplicateComputerGposCount" "-GetFullReports was not specified." $object
+			$object = addm "DuplicateUserGposCount" "-GetFullReports was not specified." $object
+			$object = addm "DuplicateBothGposCount" "-GetFullReports was not specified." $object
+		}
 		
 		$object
 	}
@@ -538,7 +675,7 @@ function Audit-MisconfiguredGpos {
 		$misnamedGpos = $object.Gpos | Where { ($_.DisplayName -notlike $DisplayNameFilter) -and ($_._LinksCountFast -gt 0) }
 		$misnamedGposCount = count $misnamedGpos
 		log "Found $misnamedGposCount misnamed GPOs." -L 1
-		addm "MisnamedGposCount" $misnamedGposCount $object
+		$object = addm "MisnamedGposCount" $misnamedGposCount $object
 		$object
 	}
 	
@@ -548,7 +685,7 @@ function Audit-MisconfiguredGpos {
 		$bothDisabledGpos = $object.Gpos | Where { $_.GpoStatus -eq "AllSettingsDisabled" }
 		$bothDisabledGposCount = count $bothDisabledGpos
 		log "Found $bothDisabledGposCount GPOs with both settings disabled." -L 1
-		addm "BothSettingsDisabledGposCount" $bothDisabledGposCount $object
+		$object = addm "BothSettingsDisabledGposCount" $bothDisabledGposCount $object
 		$object
 	}
 	
@@ -580,6 +717,9 @@ function Audit-MisconfiguredGpos {
 			ComputerSettingsConfiguredButNotEnabledGposCount,
 			UserSettingsEnabledButNotConfiguredGposCount,
 			UserSettingsConfiguredButNotEnabledGposCount,
+			DuplicateComputerGposCount,
+			DuplicateUserGposCount,
+			DuplicateBothGposCount,
 			Gpos,
 			Ous,
 			AllGpoLinks,
@@ -599,6 +739,7 @@ function Audit-MisconfiguredGpos {
 		$object = Get-DisabledSettingsGpos $object
 		$object = Mark-UnlinkedGpos $object
 		$object = Mark-UnconfiguredSettingsGpos $object
+		$object = Mark-DuplicateGpos $object
 				
 		$object = Get-RunTime $object
 		

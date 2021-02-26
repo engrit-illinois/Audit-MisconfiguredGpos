@@ -199,6 +199,15 @@ However this allows for gathering additional data:
   - Whether each matching GPO has User or Computer settings enabled but not configured, or configured but not enabled.
     - A tally of how many such GPOs were found.
 
+### -GetDuplicates
+Optional switch.  
+Ignored if `-GetFullReports` is not specified.  
+If specified, the full GPO reports of matching GPOs will be parsed to identify GPOs which have identical settings.  
+This individually checks each matching GPO against each other matching GPO and compares their Computer settings and User settings.  
+As such, this can take a while.  
+Each GPO will be given a `_DuplicateComputerGpos`, `_DuplicateUserGpos`, and `_DuplicateBothGpos` property, which contain an array of the DisplayNames of the other GPOs which have settings that duplicate the settings in the respective section of the GPO.  
+An overall count of the different kinds of duplicate GPOs is also added to the returned object, along with the other counts.  
+
 ### -Csv
 Optional string.  
 The full path of a file to export polled data to, in CSV format.  
@@ -255,15 +264,18 @@ The object returned by the script has the following structure:
   - MatchingGposCount: Total number of GPOs whose DisplayName matches the given `-DisplayNameFilter`.
   - LinkedGposCount: Total number of GPOs which have at least one link.
   - UnlinkedGposCountFast: Total number of GPOs which have zero links (calculated via fast method).
-  - UnlinkedGposCountSlow: Total number of GPOs which have zero links (calculated via slow method, only when `-GetFullReports` is specified).
-  - SomeLinksDisabledGposCount: Total number of GPOs which have links where at least one link is disabled (calculated via slow method, only when `-GetFullReports` is specified).
-  - AllLinksDisabledGposCount: Total number of GPOs which have links where all links are disabled (calculated via slow method, only when `-GetFullReports` is specified).
+  - UnlinkedGposCountSlow: Total number of matching GPOs which have zero links (calculated via slow method, only when `-GetFullReports` is specified).
+  - SomeLinksDisabledGposCount: Total number of matching GPOs which have links where at least one link is disabled (calculated via slow method, only when `-GetFullReports` is specified).
+  - AllLinksDisabledGposCount: Total number of matching GPOs which have links where all links are disabled (calculated via slow method, only when `-GetFullReports` is specified).
   - MisnamedGposCount: Total number of GPOs which have at least one link, but whose DisplayName does _not_ match the given `-DisplayNameFilter`.
-  - BothSettingsDisabledGposCount: Total number of GPOs which have both their Computer and User settings disabled.
-  - ComputerSettingsEnabledButNotConfiguredGposCount: Total number of GPOs which have Computer configuration settings enabled, but have no such settings defined.
-  - ComputerSettingsConfiguredButNotEnabledGposCount: Total number of GPOs which have Computer configuration settings configured, but have them disabled.
-  - UserSettingsEnabledButNotConfiguredGposCount: Total number of GPOs which have User configuration settings enabled, but have no such settings defined.
-  - UserSettingsConfiguredButNotEnabledGposCount: Total number of GPOs which have User configuration settings configured, but have them disabled.
+  - BothSettingsDisabledGposCount: Total number of matching GPOs which have both their Computer and User settings disabled.
+  - ComputerSettingsEnabledButNotConfiguredGposCount: Total number of matching GPOs which have Computer configuration settings enabled, but have no such settings defined.
+  - ComputerSettingsConfiguredButNotEnabledGposCount: Total number of matching GPOs which have Computer configuration settings configured, but have them disabled.
+  - UserSettingsEnabledButNotConfiguredGposCount: Total number of matching GPOs which have User configuration settings enabled, but have no such settings defined.
+  - UserSettingsConfiguredButNotEnabledGposCount: Total number of matching GPOs which have User configuration settings configured, but have them disabled.
+  - DuplicateComputerGposCount: Total number of matching GPOs which have Computer settings that exactly duplicate Computer settings in other GPOs.
+  - DuplicateUserGposCount: Total number of matching GPOs which have User settings that exactly duplicate User settings in other GPOs.
+  - DuplicateBothGposCount: Total number of matching GPOs which have both Computer _and_ User settings that exactly duplicate Computer and User settings in other GPOs.
   - Gpos: Array of all GPOs.
   - Ous: Array of all OUs under (and including) the given `-OUDN`.
   - AllGpoLinks: Flat array of all GPO links on the discovered OUs, including duplicated (i.e. where GPOs are linked to more than one OU).
