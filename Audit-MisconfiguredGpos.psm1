@@ -563,7 +563,7 @@ function Audit-MisconfiguredGpos {
 									log "This GPO has identical Computer settings." -L 4 -V 2
 								}
 								else {
-									log "This GPO does not have identical Computer settings."
+									log "This GPO does not have identical Computer settings." -L 4 -V 2
 								}
 							}
 							else {
@@ -583,7 +583,7 @@ function Audit-MisconfiguredGpos {
 									log "This GPO has identical User settings." -L 4 -V 2
 								}
 								else {
-									log "This GPO does not have identical User settings."
+									log "This GPO does not have identical User settings." -L 4 -V 2
 								}
 							}
 							else {
@@ -601,7 +601,7 @@ function Audit-MisconfiguredGpos {
 							log "This GPO has identical Computer AND User settings." -L 4 -V 2
 						}
 						else {
-							log "This GPO does not have both identical Computer and User settings."
+							log "This GPO does not have both identical Computer and User settings." -L 4 -V 2
 						}
 					}
 				}
