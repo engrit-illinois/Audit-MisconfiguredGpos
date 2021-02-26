@@ -6,7 +6,8 @@ The script will return a Powershell object containing an array of GPO objects, a
 Potential misconfigurations detected:
 - GPOs which have zero links
 - GPOs with names which do not match a given wildcard query
-- GPOs with Computer or User settings which are configured but not enabled, or vice versa
+- GPOs with Computer or User settings which are configured but not enabled
+- GPOs with Computer or User settings which are enabled but not configured
 - GPOs with disabled links
 - GPOs which have Computer or User settings (or both) which are identical to other GPOs
 
