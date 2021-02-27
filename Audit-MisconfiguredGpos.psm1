@@ -8,6 +8,7 @@ function Audit-MisconfiguredGpos {
         [string]$OUDN = "OU=Engineering,OU=Urbana,DC=ad,DC=uillinois,DC=edu",
 		
 		[switch]$GetFullReports,
+		[switch]$GetDuplicates,
 		
 		# ":ENGRIT:" will be replaced with "c:\engrit\logs\$($MODULE_NAME)_:TS:.csv"
 		# ":TS:" will be replaced with start timestamp
@@ -532,7 +533,7 @@ function Audit-MisconfiguredGpos {
 		$object
 	}
 	
-	function Mark-DuplicateGpo($object, $gpo) {
+	function Mark-DuplicateGpo($object, $gpo, $i) {
 		
 		$duplicateComputerGpos = @()
 		$duplicateUserGpos = @()
@@ -543,14 +544,14 @@ function Audit-MisconfiguredGpos {
 		
 		if($gpoComputerSettings -or $gpoUserSettings) {
 			$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
-			log "Looping through other GPOs..." -L 2 -V 1
-			$i = 0
+			log "Looping through other GPOs..." -L 3 -V 1
+			$j = 0
 			foreach($thisGpo in $object.Gpos) {
 				if($thisGpo._Matches -eq $true) {
-					$i += 1
-					log "Comparing to GPO #$i/$($matchingGposCount): `"$($thisGpo.DisplayName)`"..." -L 3 -V 1
+					$j += 1
+					log "Comparing GPO #$i to GPO #$j/$($matchingGposCount): `"$($thisGpo.DisplayName)`"..." -L 4 -V 1
 					if($thisGpo.DisplayName -eq $gpo.Displayname) {
-						log "This is the same GPO being compared. Skipping." -L 4 -V 2
+						log "This is the same GPO being compared. Skipping." -L 5 -V 2
 					}
 					else {
 						# Compare Computer settings
@@ -559,18 +560,18 @@ function Audit-MisconfiguredGpos {
 							if($thisGpoComputerSettings) {
 								if($gpoComputerSettings.InnerXml -eq $thisGpoComputerSettings.InnerXml) {
 									$duplicateComputerGpos += @($thisGpo.DisplayName)
-									log "This GPO has identical Computer settings." -L 4 -V 2
+									log "This GPO has identical Computer settings." -L 5 -V 2
 								}
 								else {
-									log "This GPO does not have identical Computer settings." -L 4 -V 2
+									log "This GPO does not have identical Computer settings." -L 5 -V 2
 								}
 							}
 							else {
-								log "This GPO has no Computer settings." -L 4 -V 2
+								log "This GPO has no Computer settings." -L 5 -V 2
 							}
 						}
 						else {
-							log "Base GPO has no Computer settings." -L 4 -V 2
+							log "Base GPO has no Computer settings." -L 5 -V 2
 						}
 						
 						# Compare User settings
@@ -579,35 +580,35 @@ function Audit-MisconfiguredGpos {
 							if($thisGpoUserSettings) {
 								if($gpoUserSettings.InnerXml -eq $thisGpoUserSettings.InnerXml) {
 									$duplicateUserGpos += @($thisGpo.DisplayName)
-									log "This GPO has identical User settings." -L 4 -V 2
+									log "This GPO has identical User settings." -L 5 -V 2
 								}
 								else {
-									log "This GPO does not have identical User settings." -L 4 -V 2
+									log "This GPO does not have identical User settings." -L 5 -V 2
 								}
 							}
 							else {
-								log "This GPO has no User settings." -L 4 -V 2
+								log "This GPO has no User settings." -L 5 -V 2
 							}
 						}
 						else {
-							log "Base GPO has no User settings." -L 4 -V 2
+							log "Base GPO has no User settings." -L 5 -V 2
 						}
 						
 						# If both Computer and User settings are identical
 						$duplicateBothSettings = $duplicateComputerSettings -and $duplicateUserSettings
 						if($duplicateBothSettings) {
 							$duplicateBothGpos += @($thisGpo.DisplayName)
-							log "This GPO has identical Computer AND User settings." -L 4 -V 2
+							log "This GPO has identical Computer AND User settings." -L 5 -V 2
 						}
 						else {
-							log "This GPO does not have both identical Computer and User settings." -L 4 -V 2
+							log "This GPO does not have both identical Computer and User settings." -L 5 -V 2
 						}
 					}
 				}
 			}
 		}
 		else {
-			log "This GPO has no settings." -L 2 -V 1
+			log "This GPO has no settings." -L 3 -V 1
 		}
 		
 		$duplicateComputerGposCount = count $duplicateComputerGpos
@@ -632,26 +633,33 @@ function Audit-MisconfiguredGpos {
 	}
 	
 	function Mark-DuplicateGpos($object) {
-		log "Indentifying duplicate GPOs (i.e. which have identical settings configured)..."
+		log "Indentifying duplicate GPOs (i.e. which have identical settings configured). This will take a while..."
 		if($GetFullReports) {
-			$object = addm "DuplicateComputerGposCount" 0 $object
-			$object = addm "DuplicateUserGposCount" 0 $object
-			$object = addm "DuplicateBothGposCount" 0 $object
-			
-			$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
-			log "Looping through GPOs..." -L 1 -V 1
-			$i = 0
-			foreach($gpo in $object.Gpos) {
-				if($gpo._Matches -eq $true) {
-					$i += 1
-					log "Identifying for GPO #$i/$($matchingGposCount): `"$($gpo.DisplayName)`"..." -L 2 -V 1
-					$object = Mark-DuplicateGpo $object $gpo
+			if($GetDuplicates) {
+				$object = addm "DuplicateComputerGposCount" 0 $object
+				$object = addm "DuplicateUserGposCount" 0 $object
+				$object = addm "DuplicateBothGposCount" 0 $object
+				
+				$matchingGposCount = count ($object.Gpos | Where { $_._Matches -eq $true })
+				log "Looping through GPOs..." -L 1 -V 1
+				$i = 0
+				foreach($gpo in $object.Gpos) {
+					if($gpo._Matches -eq $true) {
+						$i += 1
+						log "Identifying for GPO #$i/$($matchingGposCount): `"$($gpo.DisplayName)`"..." -L 2 -V 1
+						$object = Mark-DuplicateGpo $object $gpo $i
+					}
 				}
+				
+				log "Found $($object.DuplicateComputerGposCount) GPOs with Computer settings which duplicate those of other GPOs." -L 1
+				log "Found $($object.DuplicateUserGposCount) GPOs with User settings which duplicate those of other GPOs." -L 1
+				log "Found $($object.DuplicateBothGposCount) GPOs with Computer AND User settings which duplicate those of other GPOs." -L 1
 			}
-			
-			log "Found $($object.DuplicateComputerGposCount) GPOs with Computer settings which duplicate those of other GPOs." -L 1
-			log "Found $($object.DuplicateUserGposCount) GPOs with User settings which duplicate those of other GPOs." -L 1
-			log "Found $($object.DuplicateBothGposCount) GPOs with Computer AND User settings which duplicate those of other GPOs." -L 1
+			else {
+				$object = addm "DuplicateComputerGposCount" "-GetDuplicates was not specified." $object
+				$object = addm "DuplicateUserGposCount" "-GetDuplicates was not specified." $object
+				$object = addm "DuplicateBothGposCount" "-GetDuplicates was not specified." $object
+			}
 		}
 		else {
 			$object = addm "DuplicateComputerGposCount" "-GetFullReports was not specified." $object

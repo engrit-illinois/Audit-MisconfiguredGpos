@@ -29,7 +29,9 @@ Table of contents:
  
 # Examples
 It's recommended to capture the output to a variable, and select for the data you want, e.g.:  
-`$object = Audit-MisconfiguredGpos` or `$object = Audit-MisconfiguredGpos -GetFullReports`
+- `$object = Audit-MisconfiguredGpos`
+- `$object = Audit-MisconfiguredGpos -GetFullReports`
+- `$object = Audit-MisconfiguredGpos -GetFullReports -GetDuplicates`
 
 Once you have the object, you can use the following examples.  
 
@@ -85,12 +87,6 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 - `$object.Gpos | Where { ($_._ComputerSettingsConfigured -eq $true) -and ($_.Computer.Enabled -eq "false") } | Select DisplayName`
 <br />
 
-### Get all matching GPOs which have settings that are identical to settings in other GPOs:
-- Find GPOs with duplicate Computer settings: `$object.Gpos | Where { $_._DuplicateComputerGpos } | Select DisplayName,_DuplicateComputerGpos`
-- Find GPOs with duplicate User settings: `$object.Gpos | Where { $_._DuplicateUserGpos } | Select DisplayName,_DuplicateUserGpos`
-- Find GPOs with both duplicate Computer and User settings: `$object.Gpos | Where { $_._DuplicateBothGpos } | Select DisplayName,_DuplicateBothGpos
-<br />
-
 ### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
 ```powershell
 $object.UnlinkedGposCountFast
@@ -98,6 +94,16 @@ $object.UnlinkedGposCountFast
 $object.UnlinkedGposCountSlow
 ($object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountSlow -eq 0) }).count
 ```
+<br />
+
+## Examples which are only valid when `-GetFullReports` and `-GetDuplicates` are specified:
+These examples rely on data only gathered when `-GetFullReports` and `-GetDuplicates` are both is specified.
+<br />
+
+### Get all matching GPOs which have settings that are identical to settings in other GPOs:
+- Find GPOs with duplicate Computer settings: `$object.Gpos | Where { $_._DuplicateComputerGpos } | Select DisplayName,_DuplicateComputerGpos`
+- Find GPOs with duplicate User settings: `$object.Gpos | Where { $_._DuplicateUserGpos } | Select DisplayName,_DuplicateUserGpos`
+- Find GPOs with both duplicate Computer and User settings: `$object.Gpos | Where { $_._DuplicateBothGpos } | Select DisplayName,_DuplicateBothGpos
 <br />
 
 ## Examples of remediation
@@ -202,7 +208,7 @@ Default is `OU=Engineering,OU=Urbana,DC=ad,DC=uillinois,DC=edu`.
 ### -GetFullReports
 Optional switch.  
 If specified, a full GPO report will be retrieved for each matching GPO.  
-This takes significantly longer, about 1 extra second for every 2 matching GPOs. For all GPOs matching `ENGR*` this takes about 15 minutes, versus 2 minutes if `-GetFullReports` is omitted.  
+This takes significantly longer, about 1 extra second for every 2 matching GPOs. For all GPOs matching `ENGR*` this takes about 12 minutes, versus 2 minutes if `-GetFullReports` is omitted.  
   - When `-GetFullReports` is omitted, the script gathers a list of all GPOs matching `-DisplayNameFilter`, and a list of GPOs linked to all OUs under `-OUDN`, and takes the difference to determine which GPOs are unlinked. This is faster because no GPO reports must be retrieved.
   - When `-GetFullReports` is specified, the script takes a more traditional approach. It gets the full GPO report for each GPO matching `-DisplayNameFilter`, and uses the GPO report data to determine whether they have any links.
 
@@ -214,6 +220,13 @@ However this allows for gathering additional data:
     - A tally of how many such GPOs were found.
   - Whether each matching GPO has Computer of User settings which are identical to other matching GPOs.
     - A tally of how many such GPOs were found.
+
+### -GetDuplicates
+Optional switch.  
+Only valid when `-GetFullReports` is also specified. Ignored otherwise.  
+If specified, each matching GPO is compared to each other matching GPO to determine which GPOs have identical settings.  
+This is done separately for Computer and User settings.  
+Warning: This will increase runtime and memory usage _dramatically_.  
 
 ### -Csv
 Optional string.  
