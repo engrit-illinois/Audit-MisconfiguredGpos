@@ -527,12 +527,13 @@ function Audit-MisconfiguredGpos {
 	
 	function Mark-DuplicateGpo($gpo, $object, $i) {
 		
-		$duplicateComputerGpos = @()
-		$duplicateUserGpos = @()
-		$duplicateBothGpos = @()
-		
 		if($gpo._Report.GPO.Computer.ExtensionData -or $gpo._Report.GPO.User.ExtensionData) {
 			log "Looping through other GPOs..." -L 3 -V 1
+			
+			$gpo = addm "_DuplicateComputerGpos" @() $gpo $true
+			$gpo = addm "_DuplicateUserGpos" @() $gpo $true
+			$gpo = addm "_DuplicateBothGpos" @() $gpo $true
+			
 			$j = 0
 			# The performance of this loop might be able to be significantly improved with advanced use of Compare-Object,
 			# if I could figure out how to do that.
@@ -548,7 +549,7 @@ function Audit-MisconfiguredGpos {
 						if($gpo._Report.GPO.Computer.ExtensionData) {
 							if($_._Report.GPO.Computer.ExtensionData) {
 								if($gpo._Report.GPO.Computer.ExtensionData.InnerXml -eq $_._Report.GPO.Computer.ExtensionData.InnerXml) {
-									$duplicateComputerGpos += @($_.DisplayName)
+									$gpo._DuplicateComputerGpos += @($_.DisplayName)
 									log "This GPO has identical Computer settings." -L 5 -V 2
 								}
 								else {
@@ -567,7 +568,7 @@ function Audit-MisconfiguredGpos {
 						if($gpo._Report.GPO.User.ExtensionData) {
 							if($_._Report.GPO.User.ExtensionData) {
 								if($gpo._Report.GPO.User.ExtensionData.InnerXml -eq $_._Report.GPO.User.ExtensionData.InnerXml) {
-									$duplicateUserGpos += @($_.DisplayName)
+									$gpo._DuplicateUserGpos += @($_.DisplayName)
 									log "This GPO has identical User settings." -L 5 -V 2
 								}
 								else {
@@ -584,10 +585,10 @@ function Audit-MisconfiguredGpos {
 						
 						# If both Computer and User settings are identical
 						if(
-							((count $duplicateComputerGpos) -gt 0) -and
-							((count $duplicateUserGpos) -gt 0)
+							((count $gpo._DuplicateComputerGpos) -gt 0) -and
+							((count $gpo._DuplicateUserGpos) -gt 0)
 						) {
-							$duplicateBothGpos += @($_.DisplayName)
+							$gpo._DuplicateBothGpos += @($_.DisplayName)
 							log "This GPO has identical Computer AND User settings." -L 5 -V 2
 						}
 						else {
@@ -596,24 +597,25 @@ function Audit-MisconfiguredGpos {
 					}
 				}
 			}
+		
+			if((count $gpo._DuplicateComputerGpos) -eq 0) {
+				$gpo = $gpo | Select-Object -Property "*" -ExcludeProperty "_DuplicateComputerGpos"
+			}
+			if((count $gpo._DuplicateUserGpos) -gt 0) {
+				$gpo = $gpo | Select-Object -Property "*" -ExcludeProperty "_DuplicateUserGpos"
+			}
+			if((count $gpo._DuplicateBothGpos) -gt 0) {
+				$gpo = $gpo | Select-Object -Property "*" -ExcludeProperty "_DuplicateBothGpos"
+			}
 		}
 		else {
 			log "This GPO has no settings." -L 3 -V 1
 		}
 		
-		if((count $duplicateComputerGpos) -gt 0) {
-			$gpo = addm "_DuplicateComputerGpos" $duplicateComputerGpos $gpo $true
-		}
-		
-		if((count $duplicateUserGpos) -gt 0) {
-			$gpo = addm "_DuplicateUserGpos" $duplicateUserGpos $gpo $true
-		}
-		
-		if((count $duplicateBothGpos) -gt 0) {
-			$gpo = addm "_DuplicateBothGpos" $duplicateBothGpos $gpo $true
-		}
-		
 		$gpo
+		
+		Remove-Variable "gpo"
+		Remove-Variable "object"
 	}
 	
 	function Count-DuplicateGpos($object) {
@@ -696,10 +698,16 @@ function Audit-MisconfiguredGpos {
 		Exit $msg
 	}
 	
+	function Get-ArrayCsvString($array) {
+		$string = $array -join "`"; `""
+		"`"$string`""
+	}
+	
 	function Export-Gpos($object) {
 		if($Csv) {
 			log "-Csv was specified. Exporting data to `"$Csv`"..."
 			$exportObject = $object.Gpos | Select `
+			DisplayName,
 			_Matches,
 			_LinksCountFast,
 			_LinksCountSlow,
@@ -707,11 +715,10 @@ function Audit-MisconfiguredGpos {
 			_AllLinksDisabled,
 			_ComputerSettingsConfigured,
 			_UserSettingsConfigured,
-			_DuplicateComputerGpos,
-			_DuplicateUserGpos,
-			_DuplicateBothGpos,
+			@{ Name = "_DuplicateComputerGpos"; Expression = { Get-ArrayCsvString $_._DuplicateComputerGpos } },
+			@{ Name = "_DuplicateUserGpos"; Expression = { Get-ArrayCsvString $_._DuplicateUserGpos } },
+			@{ Name = "_DuplicateBothGpos"; Expression = { Get-ArrayCsvString $_._DuplicateBothGpos } },
 			Id,
-			DisplayName,
 			Path,
 			Owner,
 			DomainName,
@@ -720,7 +727,7 @@ function Audit-MisconfiguredGpos {
 			User,
 			Computer,
 			GpoStatus,
-			WmiFilter,
+			@{ Name = "WmiFilter"; Expression = { $_.WmiFilter.Name } },
 			Description
 
 			$exportObject | Export-Csv -NoTypeInformation -Encoding "Ascii" -Path $Csv

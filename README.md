@@ -208,7 +208,7 @@ Default is `OU=Engineering,OU=Urbana,DC=ad,DC=uillinois,DC=edu`.
 ### -GetFullReports
 Optional switch.  
 If specified, a full GPO report will be retrieved for each matching GPO.  
-This takes significantly longer, about 1 extra second for every 2 matching GPOs. For all GPOs matching `ENGR*` this takes about 12 minutes, versus 2 minutes if `-GetFullReports` is omitted.  
+This takes significantly longer, about 1 extra second for every 2 matching GPOs. For all GPOs matching `ENGR*` (~900) this takes about 12 minutes, versus 2 minutes if `-GetFullReports` is omitted.  
   - When `-GetFullReports` is omitted, the script gathers a list of all GPOs matching `-DisplayNameFilter`, and a list of GPOs linked to all OUs under `-OUDN`, and takes the difference to determine which GPOs are unlinked. This is faster because no GPO reports must be retrieved.
   - When `-GetFullReports` is specified, the script takes a more traditional approach. It gets the full GPO report for each GPO matching `-DisplayNameFilter`, and uses the GPO report data to determine whether they have any links.
 
@@ -226,7 +226,7 @@ Optional switch.
 Only valid when `-GetFullReports` is also specified. Ignored otherwise.  
 If specified, each matching GPO is compared to each other matching GPO to determine which GPOs have identical settings.  
 This is done separately for Computer and User settings.  
-Warning: This will increase runtime and memory usage _dramatically_.  
+Warning: This will increase runtime and memory usage _dramatically_. For all GPOs matching `ENGR *` (~900), this takes about 12 hours, versus 15 minutes or less is `-GetDuplicates` is omitted.  
 
 ### -Csv
 Optional string.  
