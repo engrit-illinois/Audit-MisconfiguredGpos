@@ -614,6 +614,7 @@ function Audit-MisconfiguredGpos {
 		
 		$gpo
 		
+		# Stop this from eating memory
 		Remove-Variable "gpo"
 		Remove-Variable "object"
 	}
@@ -699,8 +700,10 @@ function Audit-MisconfiguredGpos {
 	}
 	
 	function Get-ArrayCsvString($array) {
-		$string = $array -join "`"; `""
-		"`"$string`""
+		if($array) {
+			$string = $array -join "`"; `""
+			"`"$string`""
+		}
 	}
 	
 	function Export-Gpos($object) {
