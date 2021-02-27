@@ -540,7 +540,7 @@ function Audit-MisconfiguredGpos {
 			$object.Gpos | ForEach {
 				if($_._Matches -eq $true) {
 					$j += 1
-					log "Comparing GPO #$i to GPO #$j/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($_.DisplayName)`"..." -L 4 -V 1
+					log "Comparing GPO #$i to GPO #$j/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($_.DisplayName)`"..." -L 4 -V 2
 					if($_.DisplayName -eq $gpo.Displayname) {
 						log "This is the same GPO being compared. Skipping." -L 5 -V 2
 					}
