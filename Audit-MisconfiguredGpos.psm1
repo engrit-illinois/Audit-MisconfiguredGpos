@@ -701,7 +701,7 @@ function Audit-MisconfiguredGpos {
 	
 	function Get-ArrayCsvString($array) {
 		if($array) {
-			$string = $array -join "`"; `""
+			$string = $array -join "`";`""
 			"`"$string`""
 		}
 	}

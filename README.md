@@ -317,6 +317,7 @@ To see a specific GPO object (one of many in the `$object.Gpos` array), you can 
 <summary><i>Click to expand</i></summary>
 
 - GPO object
+  - DisplayName: The GPO's friendly name.
   - \_Matches: A boolean representing whether or not this GPO's DisplayName property matches the given `-DisplayNameFilter`.
   - \_LinksCountFast: The number of links this GPO has across all OUs under (and including) the given `-OUDN`.
   - \_Report: The full GPO report, in the format of a Powershell XML object, as returned by `Get-GPOReport -Guid $guid -ReportType "XML"`.
@@ -340,12 +341,14 @@ To see a specific GPO object (one of many in the `$object.Gpos` array), you can 
     - Equivalent to `$gpo._Report.GPO.User.ExtensionData -eq $null`.
   - \_DuplicateComputerGpos: An array of strings representing the DisplayNames of other GPOs which have identical Computer settings.
     - Only present when `-GetFullReports` is specified.
+	- In the CSV output, this is munged into a format like `"Dupe GPO 1 DisplayName";"Dupe GPO 2 DisplayName";"Dupe GPO 3 DisplayName"`.
   - \_DuplicateUserGpos: An array of strings representing the DisplayNames of other GPOs which have identical User settings.
     - Only present when `-GetFullReports` is specified.
+	- In the CSV output, this is munged into a format like `"Dupe GPO 1 DisplayName";"Dupe GPO 2 DisplayName";"Dupe GPO 3 DisplayName"`.
   - \_DuplicateBothGpos: An array of strings representing the DisplayNames of other GPOs which have both identical Computer and User settings.
     - Only present when `-GetFullReports` is specified.
+	- In the CSV output, this is munged into a format like `"Dupe GPO 1 DisplayName";"Dupe GPO 2 DisplayName";"Dupe GPO 3 DisplayName"`.
   - Id: The GPO's GUID (in [UUID format](https://en.wikipedia.org/wiki/Universally_unique_identifier)).
-  - DisplayName: The GPO's friendly name.
   - Path: The GPO's distinguished path.
   - Owner: The GPO's owner.
   - DomainName: The domain where the GPO exists.
