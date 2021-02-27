@@ -531,7 +531,7 @@ function Audit-MisconfiguredGpos {
 		$duplicateUserGpos = @()
 		$duplicateBothGpos = @()
 		
-		if($gpoComputerSettings -or $gpoUserSettings) {
+		if($gpo._Report.GPO.Computer.ExtensionData -or $gpo._Report.GPO.User.ExtensionData) {
 			log "Looping through other GPOs..." -L 3 -V 1
 			$j = 0
 			# The performance of this loop might be able to be significantly improved with advanced use of Compare-Object,
@@ -545,9 +545,9 @@ function Audit-MisconfiguredGpos {
 					}
 					else {
 						# Compare Computer settings
-						if( $gpo._Report.GPO.Computer.ExtensionData) {
+						if($gpo._Report.GPO.Computer.ExtensionData) {
 							if($thisGpo._Report.GPO.Computer.ExtensionData) {
-								if( $gpo._Report.GPO.Computer.ExtensionData.InnerXml -eq $thisGpo._Report.GPO.Computer.ExtensionData.InnerXml) {
+								if($gpo._Report.GPO.Computer.ExtensionData.InnerXml -eq $thisGpo._Report.GPO.Computer.ExtensionData.InnerXml) {
 									$duplicateComputerGpos += @($thisGpo.DisplayName)
 									log "This GPO has identical Computer settings." -L 5 -V 2
 								}
@@ -684,7 +684,31 @@ function Audit-MisconfiguredGpos {
 	function Export-Gpos($object) {
 		if($Csv) {
 			log "-Csv was specified. Exporting data to `"$Csv`"..."
-			$object.Gpos | Export-Csv -NoTypeInformation -Encoding "Ascii" -Path $Csv
+			$exportObject = $object.Gpos | Select `
+			_Matches,
+			_LinksCountFast,
+			_LinksCountSlow,
+			_SomeLinksDisabled,
+			_AllLinksDisabled,
+			_ComputerSettingsConfigured,
+			_UserSettingsConfigured,
+			_DuplicateComputerGpos,
+			_DuplicateUserGpos,
+			_DuplicateBothGpos,
+			Id,
+			DisplayName,
+			Path,
+			Owner,
+			DomainName,
+			CreationTime,
+			ModificationTime,
+			User,
+			Computer,
+			GpoStatus,
+			WmiFilter,
+			Description
+
+			$exportObject | Export-Csv -NoTypeInformation -Encoding "Ascii" -Path $Csv
 		}
 	}
 	
@@ -727,9 +751,10 @@ function Audit-MisconfiguredGpos {
 		$object = Mark-UnconfiguredSettingsGpos $object
 		$object = Mark-DuplicateGpos $object
 				
+		Export-Gpos $object
+		
 		$object = Get-RunTime $object
 		
-		Export-Gpos $object
 		Return-Object $object
 	}
 	
