@@ -42,28 +42,28 @@ See the [Output](#Output) section below for more details on the structure of the
 These examples do not require `-GetFullReports` to be specified.
 <br />
 
-### Get overall statistics:  
+#### Get overall statistics:  
 - `$object` (i.e. just output the returned object)
 - Note: `MatchingGposCount` + `MisnamedGposCount` should equal `LinkedGposCount` + `UnlinkedGposCount<Slow|Fast>`.  
 <br />
 
-### Get all GPOs which match the given `-DisplayNameQuery` and have zero links:  
+#### Get all GPOs which match the given `-DisplayNameQuery` and have zero links:  
 - `$object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) } | Select DisplayName`  
 <br />
 
-### Get all misnamed GPOs (i.e. linked to the given `-OUDN`, but which do not match the given `-DisplayNameQuery`):  
+#### Get all misnamed GPOs (i.e. linked to the given `-OUDN`, but which do not match the given `-DisplayNameQuery`):  
 - `$object.Gpos | Where { ($_._LinksCountFast -gt 0) -and ($_._Matches -eq $false) } | Select DisplayName `  
 <br />
 
-### Get all matching GPOs which have both their Computer and User configuration disabled:  
+#### Get all matching GPOs which have both their Computer and User configuration disabled:  
 - `$object.Gpos | Where { ($_._Matches -eq $true) -and ($_.GpoStatus -eq "AllSettingsDisabled") } | Select DisplayName`  
 <br />
 
-### Get all GPOs which have WMI filters:
+#### Get all GPOs which have WMI filters:
 - `$object.Gpos | Where { $_.WmiFilter -ne $null } | Select DisplayName,WmiFilter`
 <br />
 
-### Get all GPOs which have a description matching a given string:
+#### Get all GPOs which have a description matching a given string:
 - `$object.Gpos | Where { $_.Description -like "*test*" } | Select DisplayName,Description`
 <br />
 
@@ -71,23 +71,23 @@ These examples do not require `-GetFullReports` to be specified.
 These examples rely on data only gathered when `-GetFullReports` is specified.
 <br />
 
-### Get all matching GPOs which have links, but all links are disabled:  
+#### Get all matching GPOs which have links, but all links are disabled:  
 - `$object.Gpos | Where { $_._AllLinksDisabled -eq $true } | Select DisplayName`  
 <br />
 
-### Get all matching GPOs which have links, but at least one link is disabled:  
+#### Get all matching GPOs which have links, but at least one link is disabled:  
 - `$object.Gpos | Where { $_._SomeLinksDisabled -eq $true } | Select DisplayName`  
 <br />
 
-### Get all matching GPOs which have User settings enabled, but have none configured:
+#### Get all matching GPOs which have User settings enabled, but have none configured:
 - `$object.Gpos | Where { ($_.User.Enabled -eq "true") -and ($_._UserSettingsConfigured -eq $false) } | Select DisplayName`
 <br />
 
-### Get all matching GPOs which have Computer settings configured, but disabled:
+#### Get all matching GPOs which have Computer settings configured, but disabled:
 - `$object.Gpos | Where { ($_._ComputerSettingsConfigured -eq $true) -and ($_.Computer.Enabled -eq "false") } | Select DisplayName`
 <br />
 
-### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
+#### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
 ```powershell
 $object.UnlinkedGposCountFast
 ($object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) }).count
@@ -96,7 +96,7 @@ $object.UnlinkedGposCountSlow
 ```
 <br />
 
-### Cache GPO reports / Use cached GPO reports
+#### Cache GPO reports / Use cached GPO reports
 If for whatever reason you plan to run this module more than once, you can use caching to save retrieved GPO reports to an XML file, and use that for future runs instead of retrieving them all from AD again. This is primarily useful for testing purposes, as retrieving GPO reports from AD takes some time, and generates one login per matching GPO, which may raise some red flags with your AD security folks.
 
 ```powershell
@@ -111,7 +111,7 @@ $object = Audit-MisconfiguredGpos -GetFullReports -UseCachedGpos "c:\gpocache.xm
 These examples rely on data only gathered when `-GetFullReports` and `-GetDuplicates` are both is specified.
 <br />
 
-### Get all matching GPOs which have settings that are identical to settings in other GPOs:
+#### Get all matching GPOs which have settings that are identical to settings in other GPOs:
 - Find GPOs with duplicate Computer settings: `$object.Gpos | Where { $_._DuplicateComputerGpos } | Select DisplayName,_DuplicateComputerGpos`
 - Find GPOs with duplicate User settings: `$object.Gpos | Where { $_._DuplicateUserGpos } | Select DisplayName,_DuplicateUserGpos`
 - Find GPOs with both duplicate Computer and User settings: `$object.Gpos | Where { $_._DuplicateBothGpos } | Select DisplayName,_DuplicateBothGpos
