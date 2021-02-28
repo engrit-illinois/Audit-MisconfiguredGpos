@@ -366,7 +366,7 @@ function Audit-MisconfiguredGpos {
 	
 	function Get-CachedGpoReport($gpo) {
 
-		$report = (Get-Variable -Name "CACHED_GPO_REPORTS" -Scope Script -ValueOnly) | Where { $_.Name -eq $gpo.DisplayName }
+		$report = $CACHED_GPO_REPORTS | Where { $_.Name -eq $gpo.DisplayName }
 		
 		if($report) {
 			log "Successfully retrieved GPO report from cache." -L 4 -V 2
@@ -410,8 +410,8 @@ function Audit-MisconfiguredGpos {
 		if($UseCachedGpos) {
 			log "-UseCachedGpos was specified. Retrieving GPO reports from `"$UseCachedGpos`"..." -L 2
 			$startTime = Get-Date
-			Set-Variable -Name "CACHED_GPO_REPORTS" -Scope Script -Value ([xml](Get-Content -Path $UseCachedGpos -Raw).AMGReports.GPO)
-			log "Found $(Get-Variable -Name `"CACHED_GPO_REPORTS`" -Scope Script -ValueOnly) GPO reports in cache." -L 3
+			$script:CACHED_GPO_REPORTS = ([xml](Get-Content -Path $UseCachedGpos -Raw)).AMGReports.GPO
+			log "Found $(count $CACHED_GPO_REPORTS) GPO reports in cache." -L 3
 			log "Runtime: $(Get-RawRunTime $startTime)" -L 3 -V 1
 		}
 		
@@ -874,7 +874,7 @@ function Audit-MisconfiguredGpos {
 		$object = Get-Object
 		$object = Get-Gpos $object
 		$object = Mark-MatchingGpos $object
-		$object = Mark-LinkedGpos $object
+		#$object = Mark-LinkedGpos $object
 		$object = Get-MisnamedGpos $object
 		$object = Get-DisabledSettingsGpos $object
 		$object = Mark-UnlinkedGpos $object
