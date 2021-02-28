@@ -411,6 +411,7 @@ function Audit-MisconfiguredGpos {
 			log "-UseCachedGpos was specified. Retrieving GPO reports from `"$UseCachedGpos`"..." -L 2
 			$startTime = Get-Date
 			Set-Variable -Name "CACHED_GPO_REPORTS" -Scope Script -Value ([xml](Get-Content -Path $UseCachedGpos -Raw).AMGReports.GPO)
+			log "Found $(Get-Variable -Name `"CACHED_GPO_REPORTS`" -Scope Script -ValueOnly) GPO reports in cache." -L 3
 			log "Runtime: $(Get-RawRunTime $startTime)" -L 3 -V 1
 		}
 		
