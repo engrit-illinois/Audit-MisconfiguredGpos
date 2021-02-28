@@ -560,7 +560,7 @@ function Audit-MisconfiguredGpos {
 			foreach($gpo in $object.Gpos) {
 				if($gpo._Matches -eq $true) {
 					$i += 1
-					log "Identifying for GPO #$i/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($gpo.DisplayName)`"..." -L 2 -V 1
+					log "Checking settings for GPO #$i/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($gpo.DisplayName)`"..." -L 2 -V 1
 					
 					$computerSettingsConfigured = $true
 					if($gpo._Report.Computer.ExtensionData -eq $null) {
@@ -755,7 +755,7 @@ function Audit-MisconfiguredGpos {
 				$object.Gpos | ForEach {
 					if($_._Matches -eq $true) {
 						$i += 1
-						log "Identifying for GPO #$i/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($_.DisplayName)`"..." -L 2 -V 1
+						log "Identifying duplicates of GPO #$i/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($_.DisplayName)`"..." -L 2 -V 1
 						$_ = Mark-DuplicateGpo $_ $object $i
 					}
 				}
