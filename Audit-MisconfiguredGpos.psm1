@@ -10,6 +10,9 @@ function Audit-MisconfiguredGpos {
 		[switch]$GetFullReports,
 		[switch]$GetDuplicates,
 		
+		[string]$CacheGpos,
+		[string]$UseCachedGpos,
+		
 		# ":ENGRIT:" will be replaced with "c:\engrit\logs\$($MODULE_NAME)_:TS:.csv"
 		# ":TS:" will be replaced with start timestamp
 		[string]$Csv,
@@ -41,9 +44,16 @@ function Audit-MisconfiguredGpos {
 		$Csv = $Csv.Replace(":ENGRIT:","$($ENGRIT_LOG_DIR)\$($ENGRIT_LOG_FILENAME).csv")
 		$Csv = $Csv.Replace(":TS:",$START_TIMESTAMP)
 	}
+	if($CacheGpos) {
+		$CacheGpos = $CacheGpos.Replace(":ENGRIT:","$($ENGRIT_LOG_DIR)\$($ENGRIT_LOG_FILENAME)_GpoCache.xml")
+		$CacheGpos = $CacheGpos.Replace(":TS:",$START_TIMESTAMP)
+	}
+	if($UseCachedGpos) {
+		$UseCachedGpos = $UseCachedGpos.Replace(":CURRENT:","$($ENGRIT_LOG_DIR)\$($ENGRIT_LOG_FILENAME)_GpoCache.xml")
+	}
 	
-	# Value for $gpo._LinkCount, $gpo._SomeLinksDisabled, and $gpo._AllLinksDisabled if the GPO wasn't queried because it didn't match $DisplayNameFilter:
-	$GPO_NOT_A_MATCH = -1
+	[xml]$CACHED_GPO_REPORTS = $null
+	$GPO_REPORT_HEADER = "<?xml version=`"1.0`" encoding=`"utf-16`"?>"
 	
 	function log {
 		param (
@@ -125,6 +135,11 @@ function Audit-MisconfiguredGpos {
 		}
 	}
 	
+	function Log-Error($e, $L=0) {
+		log "$($e.Exception.Message)" -L $l -E
+		log "$($e.InvocationInfo.PositionMessage.Split("`n")[0])" -L ($L + 1) -E
+	}
+
 	function Get-Object {
 		[PSCustomObject]@{
 			"StartTime" = Get-Date
@@ -247,9 +262,9 @@ function Audit-MisconfiguredGpos {
 		log "Identifying linked GPOs because we only have the GUIDs currently (this may take a couple minutes)..."
 		
 		$i = 0
-		foreach($link in $object.UniqueGpoLinks) {
+		$object.UniqueGpoLinks | ForEach {
 			$i += 1
-			$guid = Get-GuidFromLink $link
+			$guid = Get-GuidFromLink $_
 			log "Polling GUID #$i/$(count $object.UniqueGpoLinks): `"$guid`"..." -L 1 -V 1
 			
 			$gpo = $object.Gpos | Where { $_.Id -eq $guid }
@@ -322,17 +337,96 @@ function Audit-MisconfiguredGpos {
 		$object
 	}
 	
+	function Cache-Gpos($object) {
+		log "Caching reports for all matching GPOs to `"$CacheGpos`" (this may take several minutes)..." -L 2
+		
+		New-Item -ItemType "File" -Force -Path $CacheGpos | Out-Null
+		
+		$GPO_REPORT_HEADER | Out-File -FilePath $CacheGpos
+		"<AMGReports>" | Out-File -FilePath $CacheGpos -Append
+		
+		$i = 0
+		$object.Gpos | ForEach {
+			if($_._Matches -eq $true) {
+				$i += 1
+				log "Caching report for GPO #$i/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($_.DisplayName)`"..." -L 3 -V 1
+				
+				(Get-LiveGpoReport $_).GPO.OuterXml | Out-File -FilePath $CacheGpos -Append
+			}
+		}
+		
+		"</AMGReports>" | Out-File -FilePath $CacheGpos -Append
+	}
+	
+	function Get-LiveGpoReport($gpo) {
+		try {
+			[xml]$report = $gpo | Get-GPOReport -ReportType "XML"
+		}
+		catch {
+			Log-Error $e 
+		}
+		
+		if($report) {
+			log "Successfully retrieved GPO report from AD." -L 3 -V 2
+		}
+		else {
+			log "Failed to retrieve GPO report from AD!" -L 3 -E
+		}
+		
+		$report
+	}
+	
+	function Get-CachedGpoReports {
+		$CACHED_GPO_REPORTS = [xml](Get-Content -Path $UseCachedGpos -Raw).AMGReports.GPO
+	}
+	
+	function Get-CachedGpoReport($gpo) {
+		
+		if($CACHED_GPO_REPORTS -eq "NONE") {
+			Get-CachedGpoReports
+		}
+		
+		$report = $CACHED_GPO_REPORTS | Where { $_.Name -eq $gpo.DisplayName }
+		
+		if($report) {
+			log "Successfully retrieved GPO report from cache." -L 3 -V 2
+		}
+		else {
+			log "Failed to retrieve GPO report from cache!" -L 3 -E
+		}
+		
+		$report
+	}
+	
+	function Get-ReportForGpo($gpo) {
+		log "Getting report for GPO #$i/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($gpo.DisplayName)`"..." -L 2 -V 1
+		
+		if($UseCachedGpos) {
+			log "-UseCachedGpos was specified. Getting report from cache..." -L 3 -V 2
+			$report = Get-CachedGpoReport $gpo
+		}
+		else {
+			log "-UseCachedGpos was not specified. Getting report from AD..." -L 3 -V 2
+			$report = Get-LiveGpoReport $gpo
+		}
+		
+		$report
+	}
+	
 	function Get-ReportsForGpos($object) {
 		log "Getting GPO reports for matching GPOs (this may take several minutes)..." -L 1
+		
+		if($CacheGpos) {
+			Cache-Gpos $object
+		}
 		
 		$i = 0
 		foreach($gpo in $object.Gpos) {
 			
 			if($gpo._Matches -eq $true) {
 				$i += 1
-				log "Getting report for GPO #$i/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($gpo.DisplayName)`"..." -L 2 -V 1
 				
-				[xml]$report = $gpo | Get-GPOReport -ReportType "XML"
+				$report = Get-ReportForGpo $gpo
 				$gpo = addm "_Report" $report $gpo $true
 				
 				log "Found $(count ($report.GPO.LinksTo)) links for GPO." -L 3 -V 2
@@ -765,7 +859,7 @@ function Audit-MisconfiguredGpos {
 	}
 	
 	function Do-Stuff {
-		
+
 		$object = Get-Object
 		$object = Get-Gpos $object
 		$object = Mark-MatchingGpos $object
@@ -775,13 +869,14 @@ function Audit-MisconfiguredGpos {
 		$object = Mark-UnlinkedGpos $object
 		$object = Mark-UnconfiguredSettingsGpos $object
 		$object = Mark-DuplicateGpos $object
-				
+		
 		Export-Gpos $object
 		
 		$object = Get-RunTime $object
 		
 		Return-Object $object
 	}
+
 	
 	Do-Stuff
 	
