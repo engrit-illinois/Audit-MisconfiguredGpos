@@ -104,7 +104,7 @@ If for whatever reason you plan to run this module more than once, you can use c
 ```powershell
 # First run
 $object = Audit-MisconfiguredGpos -GetFullReports -CacheGpos "c:\gpocache.xml"
-# Second run
+# Subsequent runs
 $object = Audit-MisconfiguredGpos -GetFullReports -UseCachedGpos "c:\gpocache.xml"
 ```
 <br />
