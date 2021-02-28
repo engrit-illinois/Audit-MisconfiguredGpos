@@ -49,7 +49,7 @@ function Audit-MisconfiguredGpos {
 		$CacheGpos = $CacheGpos.Replace(":TS:",$START_TIMESTAMP)
 	}
 	
-	$CACHED_GPO_REPORTS = @()
+	$script:CACHED_GPO_REPORTS = @()
 	$GPO_REPORT_HEADER = "<?xml version=`"1.0`" encoding=`"utf-16`"?>"
 	
 	function log {
@@ -365,9 +365,8 @@ function Audit-MisconfiguredGpos {
 	}
 	
 	function Get-CachedGpoReport($gpo) {
-		Get-CachedGpoReports
-		
-		$report = $CACHED_GPO_REPORTS | Where { $_.Name -eq $gpo.DisplayName }
+
+		$report = (Get-Variable -Name "CACHED_GPO_REPORTS" -Scope Script -ValueOnly) | Where { $_.Name -eq $gpo.DisplayName }
 		
 		if($report) {
 			log "Successfully retrieved GPO report from cache." -L 4 -V 2
@@ -411,7 +410,7 @@ function Audit-MisconfiguredGpos {
 		if($UseCachedGpos) {
 			log "-UseCachedGpos was specified. Retrieving GPO reports from `"$UseCachedGpos`"..." -L 2
 			$startTime = Get-Date
-			$script:CACHED_GPO_REPORTS = [xml](Get-Content -Path $UseCachedGpos -Raw).AMGReports.GPO
+			Set-Variable -Name "CACHED_GPO_REPORTS" -Scope Script -Value ([xml](Get-Content -Path $UseCachedGpos -Raw).AMGReports.GPO)
 			log "Runtime: $(Get-RawRunTime $startTime)" -L 3 -V 1
 		}
 		
