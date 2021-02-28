@@ -154,7 +154,7 @@ function Audit-MisconfiguredGpos {
 	
 	function Get-RawRunTime($startTime) {
 		$endTime = Get-Date
-		New-TimeSpan -Start $object.StartTime -End $endTime
+		New-TimeSpan -Start $startTime -End $endTime
 	}
 	
 	# Shorthand for an annoying common line
