@@ -96,6 +96,17 @@ $object.UnlinkedGposCountSlow
 ```
 <br />
 
+### Cache GPO reports / Use cached GPO reports
+If for whatever reason you plan to run this module more than once, you can use caching to save retrieved GPO reports to an XML file, and use that for future runs instead of retrieving them all from AD again. This is primarily useful for testing purposes, as retrieving GPO reports from AD takes some time, and generates one login per matching GPO, which may raise some red flags with your AD security folks.
+
+```powershell
+# First run
+$object = Audit-MisconfiguredGpos -GetFullReports -CacheGpos "c:\gpocache.xml"
+# Second run
+$object = Audit-MisconfiguredGpos -GetFullReports -UseCachedGpos "c:\gpocache.xml"
+```
+<br />
+
 ## Examples which are only valid when `-GetFullReports` and `-GetDuplicates` are specified:
 These examples rely on data only gathered when `-GetFullReports` and `-GetDuplicates` are both is specified.
 <br />
