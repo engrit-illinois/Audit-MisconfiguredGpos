@@ -267,13 +267,13 @@ Only relevant when `-GetFullReports` is also specified.
 This is to prevent numerous calls to AD when performing multiple runs (primarily useful when testing), to save time and to prevent campus security from bugging me about thousands of AD logins (one for each `Get-GPOReport` call) when I test the module.  
 If `:TS:` is given as part of the string, it will be replaced by a timestamp of when the script was started, with a format specified by `-LogFileTimestampFormat`.  
 Specify `:ENGRIT:` to use a default path (i.e. `c:\engrit\logs\Audit-MisconfiguredGpos_<timestamp>_GpoCache.xml`).  
+Has no effect if `-UseCachedGpos` is specified.  
 
 ### -UseCachedGpos \<string\>
 Optional string.  
 The full path to an XML file previously output by this module when `-CacheGpos` was specified.  
 Only relevant when `-GetFullReports` is also specified.  
 Cause the module to pull GPO report data from the cache file instead of directly from AD.  
-If `-CacheGpos` is specified, then specify `:CURRENT:` for `-UseCachedGpos` to use the same path specified for `-CacheGpos`.  
 
 ### -Indent \<string\>
 Optional string.  

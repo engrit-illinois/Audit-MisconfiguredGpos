@@ -48,9 +48,6 @@ function Audit-MisconfiguredGpos {
 		$CacheGpos = $CacheGpos.Replace(":ENGRIT:","$($ENGRIT_LOG_DIR)\$($ENGRIT_LOG_FILENAME)_GpoCache.xml")
 		$CacheGpos = $CacheGpos.Replace(":TS:",$START_TIMESTAMP)
 	}
-	if($UseCachedGpos) {
-		$UseCachedGpos = $UseCachedGpos.Replace(":CURRENT:","$($ENGRIT_LOG_DIR)\$($ENGRIT_LOG_FILENAME)_GpoCache.xml")
-	}
 	
 	[xml]$CACHED_GPO_REPORTS = $null
 	$GPO_REPORT_HEADER = "<?xml version=`"1.0`" encoding=`"utf-16`"?>"
@@ -153,6 +150,11 @@ function Audit-MisconfiguredGpos {
 		$object = addm "RunTime" $runTime $object
 		log "Runtime: $runTime"
 		$object
+	}
+	
+	function Get-RawRunTime($startTime) {
+		$endTime = Get-Date
+		New-TimeSpan -Start $object.StartTime -End $endTime
 	}
 	
 	# Shorthand for an annoying common line
@@ -260,6 +262,7 @@ function Audit-MisconfiguredGpos {
 		$object = Get-OuLinks $object
 		
 		log "Identifying linked GPOs because we only have the GUIDs currently (this may take a couple minutes)..."
+		$startTime = Get-Date
 		
 		$i = 0
 		$object.UniqueGpoLinks | ForEach {
@@ -293,6 +296,8 @@ function Audit-MisconfiguredGpos {
 		$uniqueLinkedGposCount = count $uniqueLinkedGpos
 		log "Found $uniqueLinkedGposCount unique linked GPOs." -L 1
 		
+		log "Runtime: $(Get-RawRunTime $startTime)" -L 1 -V 1
+		
 		$object
 	}
 	
@@ -304,6 +309,7 @@ function Audit-MisconfiguredGpos {
 	
 	function Mark-UnlinkedGposFast($object) {
 		log "Identifying GPOs which have no links (fast method)..."
+		$startTime = Get-Date
 		
 		$unlinkedGpos = $object.Gpos | Where { $_._LinksCountFast -eq 0 }
 		$unlinkedGposCount = count $unlinkedGpos
@@ -334,28 +340,9 @@ function Audit-MisconfiguredGpos {
 		log "Found $unlinkedMatchingGposCount matching GPOs with no links." -L 1
 		$object = addm "UnlinkedGposCountFast" $unlinkedMatchingGposCount $object
 		
+		log "Runtime: $(Get-RawRunTime $startTime)" -L 1 -V 1
+		
 		$object
-	}
-	
-	function Cache-Gpos($object) {
-		log "Caching reports for all matching GPOs to `"$CacheGpos`" (this may take several minutes)..." -L 2
-		
-		New-Item -ItemType "File" -Force -Path $CacheGpos | Out-Null
-		
-		$GPO_REPORT_HEADER | Out-File -FilePath $CacheGpos
-		"<AMGReports>" | Out-File -FilePath $CacheGpos -Append
-		
-		$i = 0
-		$object.Gpos | ForEach {
-			if($_._Matches -eq $true) {
-				$i += 1
-				log "Caching report for GPO #$i/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($_.DisplayName)`"..." -L 3 -V 1
-				
-				(Get-LiveGpoReport $_).GPO.OuterXml | Out-File -FilePath $CacheGpos -Append
-			}
-		}
-		
-		"</AMGReports>" | Out-File -FilePath $CacheGpos -Append
 	}
 	
 	function Get-LiveGpoReport($gpo) {
@@ -368,6 +355,7 @@ function Audit-MisconfiguredGpos {
 		
 		if($report) {
 			log "Successfully retrieved GPO report from AD." -L 3 -V 2
+			if($CacheGpos -and !$UseCachedGpos) { $report.GPO.OuterXml | Out-File -FilePath $CacheGpos -Append }
 		}
 		else {
 			log "Failed to retrieve GPO report from AD!" -L 3 -E
@@ -377,22 +365,24 @@ function Audit-MisconfiguredGpos {
 	}
 	
 	function Get-CachedGpoReports {
-		$CACHED_GPO_REPORTS = [xml](Get-Content -Path $UseCachedGpos -Raw).AMGReports.GPO
+		if($CACHED_GPO_REPORTS -eq "NONE") {
+			log "Cached GPOs not yet retrieved from file. Retrieving now from `"$UseCachedGpos`"..." -L 4
+			$startTime = Get-Date
+			$CACHED_GPO_REPORTS = [xml](Get-Content -Path $UseCachedGpos -Raw).AMGReports.GPO
+			log "Runtime: $(Get-RawRunTime $startTime)" -L 5 -V 1
+		}
 	}
 	
 	function Get-CachedGpoReport($gpo) {
-		
-		if($CACHED_GPO_REPORTS -eq "NONE") {
-			Get-CachedGpoReports
-		}
+		Get-CachedGpoReports
 		
 		$report = $CACHED_GPO_REPORTS | Where { $_.Name -eq $gpo.DisplayName }
 		
 		if($report) {
-			log "Successfully retrieved GPO report from cache." -L 3 -V 2
+			log "Successfully retrieved GPO report from cache." -L 4 -V 2
 		}
 		else {
-			log "Failed to retrieve GPO report from cache!" -L 3 -E
+			log "Failed to retrieve GPO report from cache!" -L 4 -E
 		}
 		
 		$report
@@ -416,8 +406,14 @@ function Audit-MisconfiguredGpos {
 	function Get-ReportsForGpos($object) {
 		log "Getting GPO reports for matching GPOs (this may take several minutes)..." -L 1
 		
-		if($CacheGpos) {
-			Cache-Gpos $object
+		if(
+			($CacheGpos) -and
+			(!$UseCachedGpos) -and
+			(!(Test-Path -PathType "Leaf" -Path $CacheGpos))
+		) {
+			New-Item -ItemType "File" -Force -Path $CacheGpos | Out-Null
+			$GPO_REPORT_HEADER | Out-File -FilePath $CacheGpos
+			"<AMGReports>" | Out-File -FilePath $CacheGpos -Append
 		}
 		
 		$i = 0
@@ -448,6 +444,8 @@ function Audit-MisconfiguredGpos {
 			}
 		}
 		
+		if($CacheGpos -and !$UseCachedGpos) { "</AMGReports>" | Out-File -FilePath $CacheGpos -Append }
+		
 		$object
 	}
 	
@@ -455,6 +453,7 @@ function Audit-MisconfiguredGpos {
 		
 		if($GetFullReports) {
 			log "Identifying GPOs which have no links (slow method)..."
+			$startTime = Get-Date
 			
 			$object = Get-ReportsForGpos $object
 			
@@ -469,6 +468,8 @@ function Audit-MisconfiguredGpos {
 			$allLinksDisabledGpos = $object.Gpos | Where { $_._AllLinksDisabled -eq $true }
 			$allLinksDisabledGposCount = count $allLinksDisabledGpos
 			log "Found $allLinksDisabledGposCount matching GPOs with all links disabled." -L 1
+			
+			log "Runtime: $(Get-RawRunTime $startTime)" -L 1 -V 1
 		}
 		else {
 			$unlinkedGposCount = "-GetFullReports was not specified."
@@ -542,8 +543,10 @@ function Audit-MisconfiguredGpos {
 	}
 	
 	function Mark-UnconfiguredSettingsGpos($object) {
-		log "Indentifying GPOs which have no User or Computer settings configured..."
+		
 		if($GetFullReports) {
+			log "Indentifying GPOs which have no User or Computer settings configured..."
+			$startTime = Get-Date
 			
 			$computerSettingsEnabledButNotConfiguredGposCount = 0
 			$computerSettingsConfiguredButNotEnabledGposCount = 0
@@ -603,6 +606,8 @@ function Audit-MisconfiguredGpos {
 			log "Found $computerSettingsConfiguredButNotEnabledGposCount GPOs with Computer settings configured but not enabled." -L 1
 			log "Found $userSettingsEnabledButNotConfiguredGposCount GPOs with User settings enabled but not configured." -L 1
 			log "Found $userSettingsConfiguredButNotEnabledGposCount GPOs with User settings configured but not enabled." -L 1
+			
+			log "Runtime: $(Get-RawRunTime $startTime)" -L 1 -V 1
 		}
 		else {
 			$computerSettingsEnabledButNotConfiguredGposCount = "-GetFullReports was not specified."
@@ -623,6 +628,7 @@ function Audit-MisconfiguredGpos {
 		
 		if($gpo._Report.GPO.Computer.ExtensionData -or $gpo._Report.GPO.User.ExtensionData) {
 			log "Looping through other GPOs..." -L 3 -V 1
+			$startTime = Get-Date
 			
 			$gpo = addm "_DuplicateComputerGpos" @() $gpo $true
 			$gpo = addm "_DuplicateUserGpos" @() $gpo $true
@@ -701,6 +707,8 @@ function Audit-MisconfiguredGpos {
 			if((count $gpo._DuplicateBothGpos) -gt 0) {
 				$gpo = $gpo | Select-Object -Property "*" -ExcludeProperty "_DuplicateBothGpos"
 			}
+			
+			log "Runtime: $(Get-RawRunTime $startTime)" -L 4 -V 1
 		}
 		else {
 			log "This GPO has no settings." -L 3 -V 1
@@ -734,9 +742,12 @@ function Audit-MisconfiguredGpos {
 	}
 	
 	function Mark-DuplicateGpos($object) {
-		log "Indentifying duplicate GPOs (i.e. which have identical settings configured). This will take a while..."
+		
 		if($GetFullReports) {
 			if($GetDuplicates) {
+				log "Indentifying duplicate GPOs (i.e. which have identical settings configured). This will take a while..."
+				$startTime = Get-Date
+				
 				log "Looping through GPOs..." -L 1 -V 1
 				$i = 0
 				$object.Gpos | ForEach {
@@ -752,6 +763,7 @@ function Audit-MisconfiguredGpos {
 				log "Found $($object.DuplicateComputerGposCount) GPOs with Computer settings which duplicate those of other GPOs." -L 1
 				log "Found $($object.DuplicateUserGposCount) GPOs with User settings which duplicate those of other GPOs." -L 1
 				log "Found $($object.DuplicateBothGposCount) GPOs with Computer AND User settings which duplicate those of other GPOs." -L 1
+				log "Runtime: $(Get-RawRunTime $startTime)" -L 1 -V 1
 			}
 			else {
 				$object = addm "DuplicateComputerGposCount" "-GetDuplicates was not specified." $object
