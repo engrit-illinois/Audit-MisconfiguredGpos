@@ -349,25 +349,25 @@ To see a specific GPO object (one of many in the `$object.Gpos` array), you can 
   - DisplayName: The GPO's friendly name.
   - \_Matches: A boolean representing whether or not this GPO's DisplayName property matches the given `-DisplayNameFilter`.
   - \_LinksCountFast: The number of links this GPO has across all OUs under (and including) the given `-OUDN`.
-  - \_Report: The full GPO report, in the format of a Powershell XML object, as returned by `Get-GPOReport -Guid $guid -ReportType "XML"`.
+  - \_Report: The full GPO report, in the format of a Powershell XML object, as returned by `(Get-GPOReport -Guid $guid -ReportType "XML").GPO`.
     - Only present when `-GetFullReports` is specified, and only on GPOs where `_Matches -eq $true`.
   - \_LinksCountSlow: The number of links this GPO has according to its `_Report`. Only present when `-GetFullReports` is specified.
   - \_SomeLinksDisabled: A boolean representing whether or not this GPO has one or more links which are disabled.
     - Simply calculated from the data in `_Report` for more convenient searchability.
 	- Only present when `-GetFullReports` is specified.
-    - Roughly equivalent to `($gpo._Report.GPO.LinksTo.Enabled) -contains "false"`.
+    - Roughly equivalent to `($gpo._Report.LinksTo.Enabled) -contains "false"`.
   - \_AllLinksDisabled: A boolean representing whether or not all of this GPO's links are disabled.
     - Simply calculated from the data in `_Report` for more convenient searchability.
     - Only present when `-GetFullReports` is specified.
-    - Roughly equivalent to `$unique = ($gpo._Report.GPO.LinksTo.Enabled | Select -Unique); ($unique.count -eq 1) -and ($unique -contains "false")`.
+    - Roughly equivalent to `$unique = ($gpo._Report.LinksTo.Enabled | Select -Unique); ($unique.count -eq 1) -and ($unique -contains "false")`.
   - \_ComputerSettingsConfigured: A boolean representing whether or not this GPO has any Computer configuration settings defined.
     - Calculated from data in `_Report` for more convenient searchability.
 	- Only present when `-GetFullReports` is specified.
-    - Equivalent to `$gpo._Report.GPO.Computer.ExtensionData -eq $null`.
+    - Equivalent to `$gpo._Report.Computer.ExtensionData -eq $null`.
   - \_UserSettingsConfigured: A boolean representing whether or not this GPO has any User configuration settings defined.
     - Calculated from data in `_Report` for more convenient searchability.
 	- Only present when `-GetFullReports` is specified.
-    - Equivalent to `$gpo._Report.GPO.User.ExtensionData -eq $null`.
+    - Equivalent to `$gpo._Report.User.ExtensionData -eq $null`.
   - \_DuplicateComputerGpos: An array of strings representing the DisplayNames of other GPOs which have identical Computer settings.
     - Only present when `-GetFullReports` is specified.
 	- In the CSV output, this is munged into a format like `"Dupe GPO 1 DisplayName";"Dupe GPO 2 DisplayName";"Dupe GPO 3 DisplayName"`.
@@ -397,7 +397,7 @@ To see a specific GPO object (one of many in the `$object.Gpos` array), you can 
 <details>
 <summary><i>Click to expand</i></summary>
 
-The UserConfiguration and ComputerConfiguration objects which are part of the normal GPO object only contain meta-data, and contain nothing about the actual settings defined in the GPO. This information is only available in a full GPO report, such as `$gpo._Report.GPO.Computer`. The actual settings defined in a GPO are recorded in `$gpo._Report.GPO.Computer.ExtensionData`. GPOs which do not have any settings defined for a particular configuration object will have no `ExtensionData` node. In other words `$gpo._Report.GPO.Computer.ExtensionData` will equal `$null`.  
+The UserConfiguration and ComputerConfiguration objects which are part of the normal GPO object only contain meta-data, and contain nothing about the actual settings defined in the GPO. This information is only available in a full GPO report, such as `$gpo._Report.Computer`. The actual settings defined in a GPO are recorded in `$gpo._Report.Computer.ExtensionData`. GPOs which do not have any settings defined for a particular configuration object will have no `ExtensionData` node. In other words `$gpo._Report.Computer.ExtensionData` will equal `$null`.  
 
 This is leveraged to identify GPOs which:  
   - have settings configured, but which have those settings disabled

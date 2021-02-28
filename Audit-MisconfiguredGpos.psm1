@@ -348,6 +348,7 @@ function Audit-MisconfiguredGpos {
 	function Get-LiveGpoReport($gpo) {
 		try {
 			[xml]$report = $gpo | Get-GPOReport -ReportType "XML"
+			$report = $report.GPO
 		}
 		catch {
 			Log-Error $e 
@@ -355,7 +356,7 @@ function Audit-MisconfiguredGpos {
 		
 		if($report) {
 			log "Successfully retrieved GPO report from AD." -L 3 -V 2
-			if($CacheGpos -and !$UseCachedGpos) { $report.GPO.OuterXml | Out-File -FilePath $CacheGpos -Append }
+			if($CacheGpos -and !$UseCachedGpos) { $report.OuterXml | Out-File -FilePath $CacheGpos -Append }
 		}
 		else {
 			log "Failed to retrieve GPO report from AD!" -L 3 -E
@@ -365,7 +366,9 @@ function Audit-MisconfiguredGpos {
 	}
 	
 	function Get-CachedGpoReport($gpo) {
-
+		
+		$report = 
+		
 		$report = $CACHED_GPO_REPORTS | Where { $_.Name -eq $gpo.DisplayName }
 		
 		if($report) {
@@ -424,20 +427,20 @@ function Audit-MisconfiguredGpos {
 				$report = Get-ReportForGpo $gpo
 				$gpo = addm "_Report" $report $gpo $true
 				
-				log "Found $(count ($report.GPO.LinksTo)) links for GPO." -L 3 -V 2
+				log "Found $(count ($report.LinksTo)) links for GPO." -L 3 -V 2
 				
-				log "$(count ($report.GPO.LinksTo | Where { $_.Enabled -eq `"false`" }))/$(count ($report.GPO.LinksTo)) links are disabled." -L 3 -V 2
+				log "$(count ($report.LinksTo | Where { $_.Enabled -eq `"false`" }))/$(count ($report.LinksTo)) links are disabled." -L 3 -V 2
 				
 				$someDisabled = $false
 				$allDisabled = $false
-				if((count ($report.GPO.LinksTo | Where { $_.Enabled -eq "false" })) -gt 0) {
+				if((count ($report.LinksTo | Where { $_.Enabled -eq "false" })) -gt 0) {
 					$someDisabled = $true
-					if((count ($report.GPO.LinksTo | Where { $_.Enabled -eq "false" })) -eq (count ($report.GPO.LinksTo))) {
+					if((count ($report.LinksTo | Where { $_.Enabled -eq "false" })) -eq (count ($report.LinksTo))) {
 						$allDisabled = $true
 					}
 				}
 			
-				$gpo = addm "_LinksCountSlow" (count ($report.GPO.LinksTo)) $gpo $true
+				$gpo = addm "_LinksCountSlow" (count ($report.LinksTo)) $gpo $true
 				$gpo = addm "_SomeLinksDisabled" $someDisabled $gpo $true
 				$gpo = addm "_AllLinksDisabled" $allDisabled $gpo $true
 			}
@@ -518,13 +521,13 @@ function Audit-MisconfiguredGpos {
 			switch($type) {
 				"User" {
 					$slowResult = $false
-					if($gpo._Report.GPO.User.Enabled -eq "true") {
+					if($gpo._Report.User.Enabled -eq "true") {
 						$slowResult = $true
 					}
 				}
 				"Computer" {
 					$slowResult = $false
-					if($gpo._Report.GPO.Computer.Enabled -eq "true") {
+					if($gpo._Report.Computer.Enabled -eq "true") {
 						$slowResult = $true
 					}
 				}
@@ -560,14 +563,14 @@ function Audit-MisconfiguredGpos {
 					log "Identifying for GPO #$i/$(count ($object.Gpos | Where { $_._Matches -eq $true })): `"$($gpo.DisplayName)`"..." -L 2 -V 1
 					
 					$computerSettingsConfigured = $true
-					if($gpo._Report.GPO.Computer.ExtensionData -eq $null) {
+					if($gpo._Report.Computer.ExtensionData -eq $null) {
 						$computerSettingsConfigured = $false
 					}
 					$gpo = addm "_ComputerSettingsConfigured" $computerSettingsConfigured $gpo $true
 					log "_ComputerSettingsConfigured: `"$computerSettingsConfigured`"." -L 3 -V 2
 					
 					$userSettingsConfigured = $true
-					if($gpo._Report.GPO.User.ExtensionData -eq $null) {
+					if($gpo._Report.User.ExtensionData -eq $null) {
 						$userSettingsConfigured = $false
 					}
 					$gpo = addm "_UserSettingsConfigured" $userSettingsConfigured $gpo $true
@@ -625,7 +628,7 @@ function Audit-MisconfiguredGpos {
 	
 	function Mark-DuplicateGpo($gpo, $object, $i) {
 		
-		if($gpo._Report.GPO.Computer.ExtensionData -or $gpo._Report.GPO.User.ExtensionData) {
+		if($gpo._Report.Computer.ExtensionData -or $gpo._Report.User.ExtensionData) {
 			log "Looping through other GPOs..." -L 3 -V 1
 			$startTime = Get-Date
 			
@@ -645,9 +648,9 @@ function Audit-MisconfiguredGpos {
 					}
 					else {
 						# Compare Computer settings
-						if($gpo._Report.GPO.Computer.ExtensionData) {
-							if($_._Report.GPO.Computer.ExtensionData) {
-								if($gpo._Report.GPO.Computer.ExtensionData.InnerXml -eq $_._Report.GPO.Computer.ExtensionData.InnerXml) {
+						if($gpo._Report.Computer.ExtensionData) {
+							if($_._Report.Computer.ExtensionData) {
+								if($gpo._Report.Computer.ExtensionData.InnerXml -eq $_._Report.Computer.ExtensionData.InnerXml) {
 									$gpo._DuplicateComputerGpos += @($_.DisplayName)
 									log "This GPO has identical Computer settings." -L 5 -V 2
 								}
@@ -664,9 +667,9 @@ function Audit-MisconfiguredGpos {
 						}
 						
 						# Compare User settings
-						if($gpo._Report.GPO.User.ExtensionData) {
-							if($_._Report.GPO.User.ExtensionData) {
-								if($gpo._Report.GPO.User.ExtensionData.InnerXml -eq $_._Report.GPO.User.ExtensionData.InnerXml) {
+						if($gpo._Report.User.ExtensionData) {
+							if($_._Report.User.ExtensionData) {
+								if($gpo._Report.User.ExtensionData.InnerXml -eq $_._Report.User.ExtensionData.InnerXml) {
 									$gpo._DuplicateUserGpos += @($_.DisplayName)
 									log "This GPO has identical User settings." -L 5 -V 2
 								}
