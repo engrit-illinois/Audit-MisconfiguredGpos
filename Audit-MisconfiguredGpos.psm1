@@ -366,8 +366,6 @@ function Audit-MisconfiguredGpos {
 	
 	function Get-CachedGpoReport($gpo) {
 		
-		$report = 
-		
 		$report = $CACHED_GPO_REPORTS | Where { $_.Name -eq $gpo.DisplayName }
 		
 		if($report) {
