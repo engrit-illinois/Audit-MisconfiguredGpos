@@ -41,6 +41,7 @@ See the [Output](#Output) section below for more details on the structure of the
 ## Examples which are always valid
 These examples do not require `-GetFullReports` to be specified.
 <br />
+<br />
 
 #### Get overall statistics:  
 - `$object` (i.e. just output the returned object)
@@ -69,6 +70,7 @@ These examples do not require `-GetFullReports` to be specified.
 
 ## Examples which are only valid when `-GetFullReports` is specified
 These examples rely on data only gathered when `-GetFullReports` is specified.
+<br />
 <br />
 
 #### Get all matching GPOs which have links, but all links are disabled:  
@@ -109,6 +111,7 @@ $object = Audit-MisconfiguredGpos -GetFullReports -UseCachedGpos "c:\gpocache.xm
 
 ## Examples which are only valid when `-GetFullReports` and `-GetDuplicates` are specified:
 These examples rely on data only gathered when `-GetFullReports` and `-GetDuplicates` are both is specified.
+<br />
 <br />
 
 #### Get all matching GPOs which have settings that are identical to settings in other GPOs:
