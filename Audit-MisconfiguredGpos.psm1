@@ -347,11 +347,10 @@ function Audit-MisconfiguredGpos {
 	
 	function Get-LiveGpoReport($gpo) {
 		try {
-			[xml]$report = $gpo | Get-GPOReport -ReportType "XML"
-			$report = $report.GPO
+			$report = ([xml]($gpo | Get-GPOReport -ReportType "XML")).GPO
 		}
 		catch {
-			Log-Error $e 
+			Log-Error $_
 		}
 		
 		if($report) {
@@ -637,8 +636,6 @@ function Audit-MisconfiguredGpos {
 			$gpo = addm "_DuplicateBothGpos" @() $gpo $true
 			
 			$j = 0
-			# The performance of this loop might be able to be significantly improved with advanced use of Compare-Object,
-			# if I could figure out how to do that.
 			$object.Gpos | ForEach {
 				if($_._Matches -eq $true) {
 					$j += 1
@@ -685,16 +682,26 @@ function Audit-MisconfiguredGpos {
 							log "Base GPO has no User settings." -L 5 -V 2
 						}
 						
-						# If both Computer and User settings are identical
-						if(
-							((count $gpo._DuplicateComputerGpos) -gt 0) -and
-							((count $gpo._DuplicateUserGpos) -gt 0)
-						) {
-							$gpo._DuplicateBothGpos += @($_.DisplayName)
-							log "This GPO has identical Computer AND User settings." -L 5 -V 2
+						# Compare Both settings
+						if($gpo._Report.Computer.ExtensionData -and $gpo._Report.User.ExtensionData) {
+							if($_._Report.Computer.ExtensionData -and $_._Report.User.ExtensionData) {
+								if(
+									($gpo._Report.Computer.ExtensionData.InnerXml -eq $_._Report.Computer.ExtensionData.InnerXml) -and
+									($gpo._Report.User.ExtensionData.InnerXml -eq $_._Report.User.ExtensionData.InnerXml)
+								) {
+									$gpo._DuplicateBothGpos += @($_.DisplayName)
+									log "This GPO has identical Computer and User settings." -L 5 -V 2
+								}
+								else {
+									log "This GPO does not have identical Computer and User settings." -L 5 -V 2
+								}
+							}
+							else {
+								log "This GPO does not have both Computer and User settings." -L 5 -V 2
+							}
 						}
 						else {
-							log "This GPO does not have both identical Computer and User settings." -L 5 -V 2
+							log "Base GPO does not have both Computer and User settings." -L 5 -V 2
 						}
 					}
 				}
@@ -721,26 +728,6 @@ function Audit-MisconfiguredGpos {
 		# Stop this from eating memory
 		Remove-Variable "gpo"
 		Remove-Variable "object"
-	}
-	
-	function Count-DuplicateGpos($object) {
-		$object = addm "DuplicateComputerGposCount" 0 $object
-		$object = addm "DuplicateUserGposCount" 0 $object
-		$object = addm "DuplicateBothGposCount" 0 $object
-		
-		$object.Gpos | ForEach {
-			if($_._DuplicateComputerGpos) {
-				$object.DuplicateComputerGposCount += (count $_._DuplicateComputerGpos)
-			}
-			if($_._DuplicateUserGpos) {
-				$object.DuplicateUserGposCount += (count $_._DuplicateUserGpos)
-			}
-			if($_._DuplicateBothGpos) {
-				$object.DuplicateBothGposCount += (count $_._DuplicateBothGpos)
-			}
-		}
-		
-		$object
 	}
 	
 	function Mark-DuplicateGpos($object) {
@@ -777,6 +764,26 @@ function Audit-MisconfiguredGpos {
 			$object = addm "DuplicateComputerGposCount" "-GetFullReports was not specified." $object
 			$object = addm "DuplicateUserGposCount" "-GetFullReports was not specified." $object
 			$object = addm "DuplicateBothGposCount" "-GetFullReports was not specified." $object
+		}
+		
+		$object
+	}
+	
+	function Count-DuplicateGpos($object) {
+		$object = addm "DuplicateComputerGposCount" 0 $object
+		$object = addm "DuplicateUserGposCount" 0 $object
+		$object = addm "DuplicateBothGposCount" 0 $object
+		
+		$object.Gpos | ForEach {
+			if($_._DuplicateComputerGpos) {
+				$object.DuplicateComputerGposCount += (count $_._DuplicateComputerGpos)
+			}
+			if($_._DuplicateUserGpos) {
+				$object.DuplicateUserGposCount += (count $_._DuplicateUserGpos)
+			}
+			if($_._DuplicateBothGpos) {
+				$object.DuplicateBothGposCount += (count $_._DuplicateBothGpos)
+			}
 		}
 		
 		$object
@@ -889,6 +896,7 @@ function Audit-MisconfiguredGpos {
 		$object = Get-RunTime $object
 		
 		Return-Object $object
+		Remove-Variable "object"
 	}
 
 	
