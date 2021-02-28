@@ -874,7 +874,7 @@ function Audit-MisconfiguredGpos {
 		$object = Get-Object
 		$object = Get-Gpos $object
 		$object = Mark-MatchingGpos $object
-		#$object = Mark-LinkedGpos $object
+		$object = Mark-LinkedGpos $object
 		$object = Get-MisnamedGpos $object
 		$object = Get-DisabledSettingsGpos $object
 		$object = Mark-UnlinkedGpos $object
