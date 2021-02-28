@@ -237,10 +237,10 @@ However this allows for gathering additional data:
 
 ### -GetDuplicates
 Optional switch.  
-Only valid when `-GetFullReports` is also specified. Ignored otherwise.  
+Only relevant when `-GetFullReports` is also specified. Ignored otherwise.  
 If specified, each matching GPO is compared to each other matching GPO to determine which GPOs have identical settings.  
 This is done separately for Computer and User settings.  
-Warning: This will increase runtime and memory usage _dramatically_. For all GPOs matching `ENGR *` (~900), this takes about 12 hours, versus 15 minutes or less is `-GetDuplicates` is omitted.  
+Warning: This will increase runtime _dramatically_. For all GPOs matching `ENGR *` (~900), this takes about 12 hours, versus 15 minutes or less is `-GetDuplicates` is omitted.  
 
 ### -Csv
 Optional string.  
@@ -263,16 +263,16 @@ If specified, progress output is not logged to the console.
 ### -CacheGpos \<string\>
 Optional string.  
 The full path to an XML file which will store reports for matching GPOs to be used during the current or subsequent runs by specifying `-UseCachedGpos`, instead of always pulling reports directly from AD.  
-Only relevant when `-GetFullReports` is also specified.  
+Only relevant when `-GetFullReports` is also specified. Ignored otherwise.  
+Only relevant when `-UseCachedGpos` is NOT specified. Ignored otherwise.  
 This is to prevent numerous calls to AD when performing multiple runs (primarily useful when testing), to save time and to prevent campus security from bugging me about thousands of AD logins (one for each `Get-GPOReport` call) when I test the module.  
 If `:TS:` is given as part of the string, it will be replaced by a timestamp of when the script was started, with a format specified by `-LogFileTimestampFormat`.  
 Specify `:ENGRIT:` to use a default path (i.e. `c:\engrit\logs\Audit-MisconfiguredGpos_<timestamp>_GpoCache.xml`).  
-Has no effect if `-UseCachedGpos` is specified.  
 
 ### -UseCachedGpos \<string\>
 Optional string.  
 The full path to an XML file previously output by this module when `-CacheGpos` was specified.  
-Only relevant when `-GetFullReports` is also specified.  
+Only relevant when `-GetFullReports` is also specified. Ignored otherwise.  
 Cause the module to pull GPO report data from the cache file instead of directly from AD.  
 
 ### -Indent \<string\>
