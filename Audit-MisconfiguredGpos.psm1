@@ -414,7 +414,10 @@ function Audit-MisconfiguredGpos {
 			New-Item -ItemType "File" -Force -Path $CacheGpos | Out-Null
 			$GPO_REPORT_HEADER | Out-File -FilePath $CacheGpos
 			"<AMGReports>" | Out-File -FilePath $CacheGpos -Append
+			log "-CacheGpos was specified. GPO reports will be retrieved from AD and cached to `"$CacheGpos`"." -L 2
 		}
+		
+		if($UseCachedGpos) { log "-UseCachedGpos was specified. GPO reports will be retrieved from `"$UseCachedGpos`"." -L 2 }
 		
 		$i = 0
 		foreach($gpo in $object.Gpos) {
