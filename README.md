@@ -399,6 +399,8 @@ To see a specific GPO object (one of many in the `$object.Gpos` array), you can 
 
 The UserConfiguration and ComputerConfiguration objects which are part of the normal GPO object only contain meta-data, and contain nothing about the actual settings defined in the GPO. This information is only available in a full GPO report, such as `$gpo._Report.Computer`. The actual settings defined in a GPO are recorded in `$gpo._Report.Computer.ExtensionData`. GPOs which do not have any settings defined for a particular configuration object will have no `ExtensionData` node. In other words `$gpo._Report.Computer.ExtensionData` will equal `$null`.  
 
+Update: It seems that in reports for GPOs which previously had Computer or User settings configured, but where those settings have been removed, there is still a vestigial ExtensionData node in the report's XML, which contains only an `Extension` node and a `Name` node. This causes the duplicate detection feature to not skip these GPOs and instead evaluate them as identical to other such GPOs. Working on fixing this...
+
 This is leveraged to identify GPOs which:  
   - have settings configured, but which have those settings disabled
   - have settings enabled, but which have no settings configured
