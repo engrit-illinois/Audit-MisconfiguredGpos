@@ -148,7 +148,7 @@ function Audit-MisconfiguredGpos {
 		$runTime = New-TimeSpan -Start $object.StartTime -End $endTime
 		$object = addm "EndTime" $endTime $object
 		$object = addm "RunTime" $runTime $object
-		log "Runtime: $runTime"
+		log "Overall runtime: $runTime"
 		$object
 	}
 	
@@ -822,6 +822,8 @@ function Audit-MisconfiguredGpos {
 	function Export-Gpos($object) {
 		if($Csv) {
 			log "-Csv was specified. Exporting data to `"$Csv`"..."
+			$startTime = Get-Date
+			
 			$exportObject = $object.Gpos | Select `
 			DisplayName,
 			_Matches,
@@ -847,6 +849,8 @@ function Audit-MisconfiguredGpos {
 			Description
 
 			$exportObject | Export-Csv -NoTypeInformation -Encoding "Ascii" -Path $Csv
+			
+			log "Runtime: $(Get-RawRunTime $startTime)" -L 1 -V 1
 		}
 	}
 	
