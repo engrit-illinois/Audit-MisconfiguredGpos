@@ -96,7 +96,10 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 - `$object.Gpos | Where { $_._Report.Computer.ExtensionData.Extension.Policy.Name -eq "Require a password when a computer wakes (plugged in)" } | Select DisplayName`
 ```powershell
 $gpos = $object.Gpos | Where { $_._Report.User.ExtensionData.Extension.Policy.Name -eq "Desktop Wallpaper" }
-$gpos | Select DisplayName,{$_._Report.User.ExtensionData.Extension.Policy.Name},{$_._Report.User.ExtensionData.Extension.Policy.EditText.Value}
+$gpos | Select DisplayName,
+    @{Name="Name";Expression={$_._Report.User.ExtensionData.Extension.Policy.Name}},
+    @{Name="State";Expression={$_._Report.User.ExtensionData.Extension.Policy.State}},
+    @{Name="Value";Expression={$_._Report.User.ExtensionData.Extension.Policy.EditText.Value}}
 ```
 <br />
 
