@@ -240,7 +240,7 @@ Optional switch.
 Only relevant when `-GetFullReports` is also specified. Ignored otherwise.  
 If specified, each matching GPO is compared to each other matching GPO to determine which GPOs have identical settings.  
 This is done separately for Computer and User settings.  
-Warning: This will increase runtime _dramatically_. For all GPOs matching `ENGR *` (~900), this takes about 12 hours, versus 15 minutes or less is `-GetDuplicates` is omitted.  
+Warning: This will increase runtime _dramatically_. For all GPOs matching `ENGR *` (~900), this takes about 12 hours, versus 15 minutes or less if `-GetDuplicates` is omitted.  
 
 ### -Csv
 Optional string.  
