@@ -97,6 +97,13 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 - `$object.Gpos | Where { $_._Report.User.ExtensionData.Extension.Policy.Name -eq "Desktop Wallpaper" } | Select DisplayName`
 <br />
 
+#### Get the names of all settings which are configured in a specific GPO:
+```powershell
+$gpo = $object.Gpos | Where { $_.Displayname -eq "ENGR EWS General Lab Desktop-Lockscreen Background" }
+$gpo._Report.User.ExtensionData.Extension.Policy | Select Name
+```
+<br />
+
 #### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
 ```powershell
 $object.UnlinkedGposCountFast
