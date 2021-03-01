@@ -11,6 +11,11 @@ Potential misconfigurations detected:
 - GPOs with disabled links
 - GPOs which have Computer or User settings (or both) which are identical to other GPOs
 
+This module can also be used to easily query the returned matching GPO objects for any given part of their policy, such as (but not limited to):
+- Find all GPOs which use a WmiFilter, or a specific WmiFilter
+- Find all GPOs which have a specific policy configured
+- And much more
+
 The script will optionally log all progress to a log file, to the console, and/or export the results to a CSV file.  
 
 Table of contents:
@@ -60,8 +65,9 @@ These examples do not require `-GetFullReports` to be specified.
 - `$object.Gpos | Where { ($_._Matches -eq $true) -and ($_.GpoStatus -eq "AllSettingsDisabled") } | Select DisplayName`  
 <br />
 
-#### Get all GPOs which have WMI filters:
+#### Get all GPOs which have WMI filters, or a specific WMI filter:
 - `$object.Gpos | Where { $_.WmiFilter -ne $null } | Select DisplayName,WmiFilter`
+- `$object.Gpos | Where { $_.WmiFilter.Name -eq "Windows 10 Client Filter" } | Select DisplayName`
 <br />
 
 #### Get all GPOs which have a description matching a given string:
@@ -88,6 +94,9 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 #### Get all matching GPOs which have Computer settings configured, but disabled:
 - `$object.Gpos | Where { ($_._ComputerSettingsConfigured -eq $true) -and ($_.Computer.Enabled -eq "false") } | Select DisplayName`
 <br />
+
+#### Get all matching GPOs which have a specific setting configured:
+- `$object.Gpos | Where { $_._Report.User.ExtensionData.Extension.Policy.Name -eq "Password protect the screen saver" } | Select DisplayName`
 
 #### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
 ```powershell
