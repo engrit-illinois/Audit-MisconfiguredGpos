@@ -117,7 +117,7 @@ These examples rely on data only gathered when `-GetFullReports` and `-GetDuplic
 #### Get all matching GPOs which have settings that are identical to settings in other GPOs:
 - Find GPOs with duplicate Computer settings: `$object.Gpos | Where { $_._DuplicateComputerGpos } | Select DisplayName,_DuplicateComputerGpos`
 - Find GPOs with duplicate User settings: `$object.Gpos | Where { $_._DuplicateUserGpos } | Select DisplayName,_DuplicateUserGpos`
-- Find GPOs with both duplicate Computer and User settings: `$object.Gpos | Where { $_._DuplicateBothGpos } | Select DisplayName,_DuplicateBothGpos
+- Find GPOs with both duplicate Computer and User settings: `$object.Gpos | Where { $_._DuplicateBothGpos } | Select DisplayName,_DuplicateBothGpos`
 
 Note: In my testing I came across two noteworthy scenarios regarding duplicate GPOs:  
 1. Some GPOs which seemingly have no Computer or User settings, still have a vestigial `ExtensionData` node in their GPO report's XML. My assumption is that this is due to the GPOs having originally been configured with settings, but they've since been deleted, and the XML is simply not entirely cleaned. This appears to be benign as far as the GPO's functionality, however it still causes this module to detect GPOs with identical vestigial data as duplicates. This will not be "fixed" because A) this is non-trivial to differentiate from legitimately duplicate GPOs and B) this could be considered a misconfiguration, or at least something to investigate, even if it ends up being benign.
