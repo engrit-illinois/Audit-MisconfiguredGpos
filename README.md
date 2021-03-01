@@ -94,13 +94,16 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 
 #### Get all matching GPOs which have a specific setting configured:
 - `$object.Gpos | Where { $_._Report.Computer.ExtensionData.Extension.Policy.Name -eq "Require a password when a computer wakes (plugged in)" } | Select DisplayName`
-- `$object.Gpos | Where { $_._Report.User.ExtensionData.Extension.Policy.Name -eq "Desktop Wallpaper" } | Select DisplayName`
+```powershell
+$gpos = $object.Gpos | Where { $_._Report.User.ExtensionData.Extension.Policy.Name -eq "Desktop Wallpaper" }
+$gpos | Select DisplayName,{$_._Report.User.ExtensionData.Extension.Policy.Name},{$_._Report.User.ExtensionData.Extension.Policy.EditText.Value}
+```
 <br />
 
-#### Get the names of all settings which are configured in a specific GPO:
+#### Get the name and state of all settings which are configured in a specific GPO:
 ```powershell
-$gpo = $object.Gpos | Where { $_.Displayname -eq "ENGR EWS General Lab Desktop-Lockscreen Background" }
-$gpo._Report.User.ExtensionData.Extension.Policy | Select Name
+$gpo = $object.Gpos | Where { $_.Displayname -eq "ENGR EWS Labs General Settings" }
+$gpo._Report.User.ExtensionData.Extension.Policy | Select Name,State
 ```
 <br />
 
