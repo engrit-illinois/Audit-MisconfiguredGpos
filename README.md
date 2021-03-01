@@ -11,10 +11,7 @@ Potential misconfigurations detected:
 - GPOs with disabled links
 - GPOs which have Computer or User settings (or both) which are identical to other GPOs
 
-This module can also be used to easily query the returned matching GPO objects for any given part of their policy, such as (but not limited to):
-- Find all GPOs which use a WmiFilter, or a specific WmiFilter
-- Find all GPOs which have a specific policy configured
-- And much more
+This module can also be used to easily query the returned matching GPO objects for any given part of their policy. This can be used to, for example, find all GPOs which have a specific policy configured, and much more.  
 
 The script will optionally log all progress to a log file, to the console, and/or export the results to a CSV file.  
 
