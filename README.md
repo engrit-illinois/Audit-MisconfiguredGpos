@@ -94,7 +94,7 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 
 #### Get all matching GPOs which have a specific setting configured:
 - `$object.Gpos | Where { $_._Report.Computer.ExtensionData.Extension.Policy.Name -eq "Require a password when a computer wakes (plugged in)" } | Select DisplayName`
-- `$object.Gpos | Where { $_._Report.User.ExtensionData.Extension.Policy.Name -eq "Password protect the screen saver" } | Select DisplayName`
+- `$object.Gpos | Where { $_._Report.User.ExtensionData.Extension.Policy.Name -eq "Desktop Wallpaper" } | Select DisplayName`
 <br />
 
 #### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
