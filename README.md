@@ -71,6 +71,12 @@ These examples do not require `-GetFullReports` to be specified.
 - `$object.Gpos | Where { $_.Description -like "*test*" } | Select DisplayName,Description`
 <br />
 
+#### Get all GPOs which have a blank description, or a uselessly short or generic description:
+- `$object.Gpos | Where { ($_.Description -eq $null) -or ($_.Description -eq "") -or ($_.Description -eq " ") -or ($_.Description -like "*please do not remove*") } | Select DisplayName,Description`
+- `$object.Gpos | Where { $_.Description.length -lt 10 } | Select DisplayName,Description`
+- `$object.Gpos | Where { ($_.Description -like "*please do not remove*") } | Select DisplayName,Description`
+<br />
+
 ## Examples which are only valid when `-GetFullReports` is specified
 These examples rely on data only gathered when `-GetFullReports` is specified.
 <br />
