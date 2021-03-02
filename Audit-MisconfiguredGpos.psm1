@@ -533,7 +533,7 @@ function Audit-MisconfiguredGpos {
 			
 			# If we have both results, compare them for a sanity check
 			if($fastResult -ne $slowResult) {
-				Quit "A GPO's `"$type`" settings status could not be determined, because the GPO object and the GPO report disagree: `"$($gpo.DisplayName)`"!"
+				log "The `"$type`" settings status for this GPO object conflicts with the settings status in the GPO's report! This could be due to using cached GPO reports (via the -UseCachedGpos switch parameter), or the settings may have been edited in between retrieving GPO object data and retrieving the GPO's report." -E
 			}
 		}
 		
