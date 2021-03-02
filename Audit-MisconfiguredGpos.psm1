@@ -365,8 +365,7 @@ function Audit-MisconfiguredGpos {
 	}
 	
 	function Get-CachedGpoReport($gpo) {
-		
-		$report = $CACHED_GPO_REPORTS | Where { $_.Name -eq $gpo.DisplayName }
+		$report = $CACHED_GPO_REPORTS | Where { (($_.Identifier.Identifier."#text").Replace("{","").Replace("}","")) -eq $gpo.Id }
 		
 		if($report) {
 			log "Successfully retrieved GPO report from cache." -L 4 -V 2
@@ -533,7 +532,7 @@ function Audit-MisconfiguredGpos {
 			
 			# If we have both results, compare them for a sanity check
 			if($fastResult -ne $slowResult) {
-				log "The `"$type`" settings status for this GPO object conflicts with the settings status in the GPO's report! This could be due to using cached GPO reports (via the -UseCachedGpos switch parameter), or the settings may have been edited in between retrieving GPO object data and retrieving the GPO's report." -E
+				log "The `"$type`" settings status for this GPO object conflicts with the settings status in the GPO's report! This could be due to using outdated cached GPO reports (via the -UseCachedGpos switch parameter), or the settings may have been edited in between retrieving GPO object data and retrieving the GPO's report." -E -L 3
 			}
 		}
 		

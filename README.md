@@ -307,6 +307,7 @@ Optional string.
 The full path to an XML file previously output by this module when `-CacheGpos` was specified.  
 Only relevant when `-GetFullReports` is also specified. Ignored otherwise.  
 Cause the module to pull GPO report data from the cache file instead of directly from AD.  
+Warning: Using cached GPOs may result in the returned data containing some anomalies, due to GPOs being created, removed, or changed since the cached data was retrieved.  
 
 ### -Indent \<string\>
 Optional string.  
