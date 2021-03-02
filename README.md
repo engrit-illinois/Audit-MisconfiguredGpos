@@ -72,9 +72,9 @@ These examples do not require `-GetFullReports` to be specified.
 <br />
 
 #### Get all GPOs which have a blank description, or a uselessly short or generic description:
-- `$object.Gpos | Where { ($_.Description -eq $null) -or ($_.Description -eq "") -or ($_.Description -eq " ") -or ($_.Description -like "*please do not remove*") } | Select DisplayName,Description`
-- `$object.Gpos | Where { $_.Description.length -lt 10 } | Select DisplayName,Description`
-- `$object.Gpos | Where { ($_.Description -like "*please do not remove*") } | Select DisplayName,Description`
+- `$object.Gpos | Where { ($_.Description -eq $null) -or ($_.Description -eq "") -or ($_.Description -eq " ") -or ($_.Description -like "*please do not remove*") } | Select DisplayName,Description | Format-Table -AutoSize`
+- `$object.Gpos | Where { $_.Description.length -lt 20 } | Select DisplayName,Description | Format-Table -AutoSize`
+- `$object.Gpos | Where { ($_.Description -like "*please do not remove*") } | Select DisplayName,Description | Format-Table -AutoSize`
 <br />
 
 ## Examples which are only valid when `-GetFullReports` is specified
