@@ -24,9 +24,8 @@ Table of contents:
 <br />
 
 # Usage
-1. Download `Audit-MisconfiguredGpos.psm1`.
-2. Import it as a module: `Import-Module "c:\path\to\Audit-MisconfiguredGpos.psm1"`.
-3. Run the module as your SU account, using the examples and parameter documentation provided below.
+1. Download `Audit-MisconfiguredGpos.psm1` to `$HOME\Documents\WindowsPowerShell\Modules\Audit-MisconfiguredGpos\Audit-MisconfiguredGpos.psm1`.
+2. Run the module as your SU account, using the examples and parameter documentation provided below.
 <br />
  
 # Examples
