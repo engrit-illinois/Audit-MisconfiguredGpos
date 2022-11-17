@@ -24,7 +24,7 @@ Table of contents:
 <br />
 
 # Usage
-1. Download `Audit-MisconfiguredGpos.psm1` to `$HOME\Documents\WindowsPowerShell\Modules\Audit-MisconfiguredGpos\Audit-MisconfiguredGpos.psm1`.
+1. Download `Audit-MisconfiguredGpos.psm1` to the appropriate subdirectory of your PowerShell [modules directory](https://github.com/engrit-illinois/how-to-install-a-custom-powershell-module).
 2. Run the module as your SU account, using the examples and parameter documentation provided below.
 <br />
  
