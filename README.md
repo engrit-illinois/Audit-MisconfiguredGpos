@@ -11,6 +11,8 @@ Potential misconfigurations detected:
 - GPOs with disabled links
 - GPOs which have Computer or User settings (or both) which are identical to other GPOs
 
+To find GPOs which contain orphaned settings due to those settings being deprecated by ADMX template updates, see [Get-GpoContainingSetting](https://github.com/engrit-illinois/Get-GpoContainingSetting). Specifically, see the example referencing `Extra Registry Settings`.  
+
 This module can also be used to easily query the returned matching GPO objects for any given part of their policy. This can be used to, for example, find all GPOs which have a specific policy configured, and much more.  
 
 The script will optionally log all progress to a log file, to the console, and/or export the results to a CSV file.  
