@@ -27,7 +27,8 @@ Table of contents:
 
 # Usage
 1. Download `Audit-MisconfiguredGpos.psm1` to the appropriate subdirectory of your PowerShell [modules directory](https://github.com/engrit-illinois/how-to-install-a-custom-powershell-module).
-2. Run the module as your SU account, using the examples and parameter documentation provided below.
+2. Customize the default values of the `-Domain`, `-DisplayNameFilter`, and `-OUDN` for your use case at the top of `Audit-MisconfiguredGpos.psm1`.
+3. Run the module as your SU account, using the examples and parameter documentation provided below.
 <br />
  
 # Examples
@@ -242,16 +243,19 @@ $gposToRemove | ForEach-Object {
 Optional string.  
 The domain to limit the GPO search to.  
 Default is `ad.uillinois.edu`.  
+If your domain is different, then change this default at the top of `Audit-MisconfiguredGpos.psm1` and then re-import the module, so you don't have to specify this parameter every time.  
 
 ### -DisplayNameFilter \<string\>
 Optional string.  
 The wildcard query used to filter GPOs by their `DisplayName` property.  
 Default is `ENGR*`.  
+If your GPOs use a different common name convention, then change this default at the top of `Audit-MisconfiguredGpos.psm1` and then reimport the module, so you don't have to specify this parameter every time.  
 
 ### -OUDN \<string\>
 Optional string.  
 The DistniguishedName of the OU to look for GPO links in.  
 Default is `OU=Engineering,OU=Urbana,DC=ad,DC=uillinois,DC=edu`.  
+If your usual OU is different, then change this default at the top of `Audit-MisconfiguredGpos.psm1` and then reimport the module, so you don't have to specify this parameter every time.  
 
 ### -GetFullReports
 Optional switch.  
@@ -280,15 +284,11 @@ Warning: This will increase runtime _dramatically_. For all GPOs matching `ENGR 
 Optional string.  
 The full path of a file to export polled data to, in CSV format.  
 If omitted, no CSV will be created.  
-If `:TS:` is given as part of the string, it will be replaced by a timestamp of when the script was started, with a format specified by `-LogFileTimestampFormat`.  
-Specify `:ENGRIT:` to use a default path (i.e. `c:\engrit\logs\Audit-MisconfiguredGpos_<timestamp>.csv`).  
 
 ### -Log
 Optional string.  
 The full path of a file to log to.  
 If omitted, no log will be created.  
-If `:TS:` is given as part of the string, it will be replaced by a timestamp of when the script was started, with a format specified by `-LogFileTimestampFormat`.  
-Specify `:ENGRIT:` to use a default path (i.e. `c:\engrit\logs\Audit-MisconfiguredGpos_<timestamp>.log`).  
 
 ### -Quiet
 Optional switch.  
@@ -300,8 +300,6 @@ The full path to an XML file which will store reports for matching GPOs to be us
 Only relevant when `-GetFullReports` is also specified. Ignored otherwise.  
 Only relevant when `-UseCachedGpos` is NOT specified. Ignored otherwise.  
 This is to prevent numerous calls to AD when performing multiple runs (primarily useful when testing), to save time and to prevent campus security from bugging me about thousands of AD logins (one for each `Get-GPOReport` call) when I test the module.  
-If `:TS:` is given as part of the string, it will be replaced by a timestamp of when the script was started, with a format specified by `-LogFileTimestampFormat`.  
-Specify `:ENGRIT:` to use a default path (i.e. `c:\engrit\logs\Audit-MisconfiguredGpos_<timestamp>_GpoCache.xml`).  
 
 ### -UseCachedGpos \<string\>
 Optional string.  

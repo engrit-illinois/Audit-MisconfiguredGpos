@@ -5,7 +5,7 @@ function Audit-MisconfiguredGpos {
 	param(
 		[string]$Domain = "ad.uillinois.edu",
 		[string]$DisplayNameFilter = "ENGR*",
-        [string]$OUDN = "OU=Engineering,OU=Urbana,DC=ad,DC=uillinois,DC=edu",
+		[string]$OUDN = "OU=Engineering,OU=Urbana,DC=ad,DC=uillinois,DC=edu",
 		
 		[switch]$GetFullReports,
 		[switch]$GetDuplicates,
@@ -13,12 +13,8 @@ function Audit-MisconfiguredGpos {
 		[string]$CacheGpos,
 		[string]$UseCachedGpos,
 		
-		# ":ENGRIT:" will be replaced with "c:\engrit\logs\$($MODULE_NAME)_:TS:.csv"
-		# ":TS:" will be replaced with start timestamp
 		[string]$Csv,
 		
-		# ":ENGRIT:" will be replaced with "c:\engrit\logs\$($MODULE_NAME)_:TS:.log"
-		# ":TS:" will be replaced with start timestamp
 		[string]$Log,
 		
 		[switch]$Quiet,
@@ -29,25 +25,6 @@ function Audit-MisconfiguredGpos {
 		#[string]$LogLineTimestampFormat = $null, # For no timestamp
 		[int]$Verbosity = 0
 	)
-	
-	$MODULE_NAME = "Audit-MisconfiguredGpos"
-	
-	$ENGRIT_LOG_DIR = "c:\engrit\logs"
-	$ENGRIT_LOG_FILENAME = "$($MODULE_NAME)_:TS:"
-	
-	$START_TIMESTAMP = Get-Date -Format $LogFileTimestampFormat
-	if($Log) {
-		$Log = $Log.Replace(":ENGRIT:","$($ENGRIT_LOG_DIR)\$($ENGRIT_LOG_FILENAME).log")
-		$Log = $Log.Replace(":TS:",$START_TIMESTAMP)
-	}
-	if($Csv) {
-		$Csv = $Csv.Replace(":ENGRIT:","$($ENGRIT_LOG_DIR)\$($ENGRIT_LOG_FILENAME).csv")
-		$Csv = $Csv.Replace(":TS:",$START_TIMESTAMP)
-	}
-	if($CacheGpos) {
-		$CacheGpos = $CacheGpos.Replace(":ENGRIT:","$($ENGRIT_LOG_DIR)\$($ENGRIT_LOG_FILENAME)_GpoCache.xml")
-		$CacheGpos = $CacheGpos.Replace(":TS:",$START_TIMESTAMP)
-	}
 	
 	$script:CACHED_GPO_REPORTS = @()
 	$GPO_REPORT_HEADER = "<?xml version=`"1.0`" encoding=`"utf-16`"?>"
