@@ -80,7 +80,7 @@ $object.Gpos | Where { ($_._Matches -eq $true) -and ($_.GpoStatus -eq "AllSettin
 #### Get all matching GPOs which have WMI filters, or a specific WMI filter:
 ```powershell
 $object = Audit-MisconfiguredGpos
-# GPO which have any WMI filter configured:
+# GPOs which have any WMI filter configured:
 $object.Gpos | Where { $_.WmiFilter -ne $null } | Select DisplayName,WmiFilter
 # GPOs which have a WMI filter with a specific name configured:
 $object.Gpos | Where { $_.WmiFilter.Name -eq "Windows 10 Client Filter" } | Select DisplayName
