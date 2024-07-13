@@ -51,13 +51,13 @@ $object = Audit-MisconfiguredGpos
 # Note: `MatchingGposCount` + `MisnamedGposCount` should be equal to `LinkedGposCount` + `UnlinkedGposCount<Slow|Fast>`.
 $object
 
-# GPOs which match the given `-DisplayNameQuery` and have zero links:  
+# GPOs which match the given `-DisplayNameQuery` and have zero links:
 $object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) } | Select DisplayName
 
-# GPOs (i.e. linked to the given `-OUDN`, but which do not match the given `-DisplayNameQuery`):  
+# GPOs linked to the given `-OUDN`, but which do not match the given `-DisplayNameQuery`:
 $object.Gpos | Where { ($_._LinksCountFast -gt 0) -and ($_._Matches -eq $false) } | Select DisplayName
 
-# GPOs which have both their Computer and User configuration disabled:  
+# GPOs which have both their Computer and User configuration disabled:
 $object.Gpos | Where { ($_._Matches -eq $true) -and ($_.GpoStatus -eq "AllSettingsDisabled") } | Select DisplayName
 
 # GPOs which have any WMI filter configured:
@@ -88,10 +88,10 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 ```powershell
 $object = Audit-MisconfiguredGpos -GetFullReports
 
-# GPOs which have links, but all links are disabled:  
+# GPOs which have links, but all links are disabled:
 $object.Gpos | Where { $_._AllLinksDisabled -eq $true } | Select DisplayName
 
-# GPOs which have links, but at least one link is disabled:  
+# GPOs which have links, but at least one link is disabled:
 $object.Gpos | Where { $_._SomeLinksDisabled -eq $true } | Select DisplayName
 
 # GPOs which have User settings enabled, but have none configured:
@@ -114,7 +114,7 @@ $gpos | Select DisplayName,
 $gpo = $object.Gpos | Where { $_.Displayname -eq "ENGR EWS Labs General Settings" }
 $gpo._Report.User.ExtensionData.Extension.Policy | Select Name,State
 
-# Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
+# Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:
 $object.UnlinkedGposCountFast
 ($object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) }).count
 $object.UnlinkedGposCountSlow
