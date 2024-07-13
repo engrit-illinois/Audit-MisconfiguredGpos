@@ -33,12 +33,9 @@ Table of contents:
  
 # Examples
 It's recommended to capture the output to a variable, and select for the data you want, e.g.:  
-- `$object = Audit-MisconfiguredGpos`
-- `$object = Audit-MisconfiguredGpos -GetFullReports`
-- `$object = Audit-MisconfiguredGpos -GetFullReports -GetDuplicates`
-
-Once you have the object, you can use the following examples.  
-
+```powershell
+$object = Audit-MisconfiguredGpos
+```
 See the [Output](#Output) section below for more details on the structure of the returned `$object`.  
 <br />
 
@@ -47,60 +44,37 @@ These examples do not require `-GetFullReports` to be specified.
 <br />
 <br />
 
-#### Get overall statistics:  
-I.e. just output the returned object.  
 ```powershell
 $object = Audit-MisconfiguredGpos
+
+# Get overall statistics, i.e. just output the returned object:
+# Note: `MatchingGposCount` + `MisnamedGposCount` should be equal to `LinkedGposCount` + `UnlinkedGposCount<Slow|Fast>`.
 $object
-```
-Note: `MatchingGposCount` + `MisnamedGposCount` should be equal to `LinkedGposCount` + `UnlinkedGposCount<Slow|Fast>`.  
-<br />
 
-#### Get all GPOs which match the given `-DisplayNameQuery` and have zero links:  
-```powershell
-$object = Audit-MisconfiguredGpos
+# GPOs which match the given `-DisplayNameQuery` and have zero links:  
 $object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) } | Select DisplayName
-```
-<br />
 
-#### Get all misnamed GPOs (i.e. linked to the given `-OUDN`, but which do not match the given `-DisplayNameQuery`):  
-```powershell
-$object = Audit-MisconfiguredGpos
+# GPOs (i.e. linked to the given `-OUDN`, but which do not match the given `-DisplayNameQuery`):  
 $object.Gpos | Where { ($_._LinksCountFast -gt 0) -and ($_._Matches -eq $false) } | Select DisplayName
-```
-<br />
 
-#### Get all matching GPOs which have both their Computer and User configuration disabled:  
-```powershell
-$object = Audit-MisconfiguredGpos
+# GPOs which have both their Computer and User configuration disabled:  
 $object.Gpos | Where { ($_._Matches -eq $true) -and ($_.GpoStatus -eq "AllSettingsDisabled") } | Select DisplayName
-```
-<br />
 
-#### Get all matching GPOs which have WMI filters, or a specific WMI filter:
-```powershell
-$object = Audit-MisconfiguredGpos
 # GPOs which have any WMI filter configured:
 $object.Gpos | Where { $_.WmiFilter -ne $null } | Select DisplayName,WmiFilter
+
 # GPOs which have a WMI filter with a specific name configured:
 $object.Gpos | Where { $_.WmiFilter.Name -eq "Windows 10 Client Filter" } | Select DisplayName
-```
-<br />
 
-#### Get all matching GPOs which have a description matching a given string:
-```powershell
-$object = Audit-MisconfiguredGpos
+# GPOs which have a description matching a given string:
 $object.Gpos | Where { $_.Description -like "*test*" } | Select DisplayName,Description
-```
-<br />
 
-#### Get all matching GPOs which have a blank description, a uselessly short or generic description, or a specific given description:
-```powershell
-$object = Audit-MisconfiguredGpos
 # GPOs which have a blank description:
 $object.Gpos | Where { ($_.Description -eq $null) -or ($_.Description -eq "") -or ($_.Description -eq " ") -or ($_.Description.length -lt 1) } | Select DisplayName,Description | Format-Table -AutoSize
-# GPOs which have a short (<20 character) description:
+
+# GPOs which have a description under a given length:
 $object.Gpos | Where { $_.Description.length -lt 20 } | Select DisplayName,Description | Format-Table -AutoSize
+
 # GPOs which have a description containing specific text:
 $object.Gpos | Where { ($_.DisplayName -like "ENGR*") -and ($_.Description -like "*please do not remove*") } | Select DisplayName,Description | Format-Table -AutoSize
 ```
@@ -111,60 +85,36 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 <br />
 <br />
 
-#### Get all matching GPOs which have links, but all links are disabled:  
 ```powershell
 $object = Audit-MisconfiguredGpos -GetFullReports
+
+# GPOs which have links, but all links are disabled:  
 $object.Gpos | Where { $_._AllLinksDisabled -eq $true } | Select DisplayName
-```
-<br />
 
-#### Get all matching GPOs which have links, but at least one link is disabled:  
-```powershell
-$object = Audit-MisconfiguredGpos -GetFullReports
+# GPOs which have links, but at least one link is disabled:  
 $object.Gpos | Where { $_._SomeLinksDisabled -eq $true } | Select DisplayName
-```
-<br />
 
-#### Get all matching GPOs which have User settings enabled, but have none configured:
-```powershell
-$object = Audit-MisconfiguredGpos -GetFullReports
+# GPOs which have User settings enabled, but have none configured:
 $object.Gpos | Where { ($_.User.Enabled -eq "true") -and ($_._UserSettingsConfigured -eq $false) } | Select DisplayName
-```
-<br />
 
-#### Get all matching GPOs which have Computer settings configured, but disabled:
-```powershell
-$object = Audit-MisconfiguredGpos -GetFullReports
+# GPOs which have Computer settings configured, but disabled:
 $object.Gpos | Where { ($_._ComputerSettingsConfigured -eq $true) -and ($_.Computer.Enabled -eq "false") } | Select DisplayName
-```
-<br />
 
-#### Get all matching GPOs which have a specific setting configured:
-```powershell
-$object = Audit-MisconfiguredGpos -GetFullReports
+# GPOs which have a specific setting configured:
 $object.Gpos | Where { $_._Report.Computer.ExtensionData.Extension.Policy.Name -eq "Require a password when a computer wakes (plugged in)" } | Select DisplayName
-```
-```powershell
-$object = Audit-MisconfiguredGpos -GetFullReports
+
+# GPOs which have a specific setting configured, include the actual setting values in the output:
 $gpos = $object.Gpos | Where { $_._Report.User.ExtensionData.Extension.Policy.Name -eq "Desktop Wallpaper" }
 $gpos | Select DisplayName,
     @{Name="Name";Expression={$_._Report.User.ExtensionData.Extension.Policy.Name}},
     @{Name="State";Expression={$_._Report.User.ExtensionData.Extension.Policy.State}},
     @{Name="Value";Expression={$_._Report.User.ExtensionData.Extension.Policy.EditText.Value}}
-```
-<br />
 
-#### Get the name and state of all settings which are configured in a specific GPO:
-```powershell
-$object = Audit-MisconfiguredGpos -GetFullReports
+# Get the name and state of all settings which are configured in a specific GPO:
 $gpo = $object.Gpos | Where { $_.Displayname -eq "ENGR EWS Labs General Settings" }
 $gpo._Report.User.ExtensionData.Extension.Policy | Select Name,State
-```
-<br />
 
-#### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
-```powershell
-$object = Audit-MisconfiguredGpos -GetFullReports
+# Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
 $object.UnlinkedGposCountFast
 ($object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) }).count
 $object.UnlinkedGposCountSlow
@@ -172,12 +122,15 @@ $object.UnlinkedGposCountSlow
 ```
 <br />
 
-#### Cache GPO reports / Use cached GPO reports
-If for whatever reason you plan to run this module more than once, you can use caching to save retrieved GPO reports to an XML file, and use that for future runs instead of retrieving them all from AD again. This is primarily useful for testing purposes, as retrieving GPO reports from AD takes some time, and generates one login per matching GPO, which may raise some red flags with your AD security folks.
+## Cache GPO reports / Use cached GPO reports
+If for whatever reason you plan to run this module more than once without needing to retrieve updated data from AD, you can use caching to save retrieved GPO reports to an XML file, and use that for future runs instead of retrieving them all from AD again. This is primarily useful for testing purposes, as retrieving GPO reports from AD takes some time, and generates one login per matching GPO, which may raise some red flags with your AD security folks.
 
 ```powershell
+$object = Audit-MisconfiguredGpos -GetFullReports
+
 # First run
 $object = Audit-MisconfiguredGpos -GetFullReports -CacheGpos "c:\gpocache.xml"
+
 # Subsequent runs
 $object = Audit-MisconfiguredGpos -GetFullReports -UseCachedGpos "c:\gpocache.xml"
 ```
@@ -188,14 +141,16 @@ These examples rely on data only gathered when `-GetFullReports` and `-GetDuplic
 <br />
 <br />
 
-#### Get all matching GPOs which have settings that are identical to settings in other GPOs:
 ```powershell
 $object = Audit-MisconfiguredGpos -GetFullReports -GetDuplicates
-# Find GPOs with duplicate Computer settings:
+
+# GPOs with duplicate Computer settings:
 $object.Gpos | Where { $_._DuplicateComputerGpos } | Select DisplayName,_DuplicateComputerGpos
-# Find GPOs with duplicate User settings:
+
+# GPOs with duplicate User settings:
 $object.Gpos | Where { $_._DuplicateUserGpos } | Select DisplayName,_DuplicateUserGpos
-# Find GPOs with both duplicate Computer and User settings:
+
+# GPOs with both duplicate Computer and User settings:
 $object.Gpos | Where { $_._DuplicateBothGpos } | Select DisplayName,_DuplicateBothGpos
 ```
 
