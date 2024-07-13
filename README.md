@@ -48,35 +48,62 @@ These examples do not require `-GetFullReports` to be specified.
 <br />
 
 #### Get overall statistics:  
-- `$object` (i.e. just output the returned object)
-- Note: `MatchingGposCount` + `MisnamedGposCount` should equal `LinkedGposCount` + `UnlinkedGposCount<Slow|Fast>`.  
+I.e. just output the returned object.  
+```powershell
+$object = Audit-MisconfiguredGpos
+$object
+```
+Note: `MatchingGposCount` + `MisnamedGposCount` should be equal to `LinkedGposCount` + `UnlinkedGposCount<Slow|Fast>`.  
 <br />
 
 #### Get all GPOs which match the given `-DisplayNameQuery` and have zero links:  
-- `$object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) } | Select DisplayName`  
+```powershell
+$object = Audit-MisconfiguredGpos
+$object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) } | Select DisplayName
+```
 <br />
 
 #### Get all misnamed GPOs (i.e. linked to the given `-OUDN`, but which do not match the given `-DisplayNameQuery`):  
-- `$object.Gpos | Where { ($_._LinksCountFast -gt 0) -and ($_._Matches -eq $false) } | Select DisplayName `  
+```powershell
+$object = Audit-MisconfiguredGpos
+$object.Gpos | Where { ($_._LinksCountFast -gt 0) -and ($_._Matches -eq $false) } | Select DisplayName
+```
 <br />
 
 #### Get all matching GPOs which have both their Computer and User configuration disabled:  
-- `$object.Gpos | Where { ($_._Matches -eq $true) -and ($_.GpoStatus -eq "AllSettingsDisabled") } | Select DisplayName`  
+```powershell
+$object = Audit-MisconfiguredGpos
+$object.Gpos | Where { ($_._Matches -eq $true) -and ($_.GpoStatus -eq "AllSettingsDisabled") } | Select DisplayName
+```
 <br />
 
-#### Get all GPOs which have WMI filters, or a specific WMI filter:
-- `$object.Gpos | Where { $_.WmiFilter -ne $null } | Select DisplayName,WmiFilter`
-- `$object.Gpos | Where { $_.WmiFilter.Name -eq "Windows 10 Client Filter" } | Select DisplayName`
+#### Get all matching GPOs which have WMI filters, or a specific WMI filter:
+```powershell
+$object = Audit-MisconfiguredGpos
+# GPO which have any WMI filter configured:
+$object.Gpos | Where { $_.WmiFilter -ne $null } | Select DisplayName,WmiFilter
+# GPOs which have a WMI filter with a specific name configured:
+$object.Gpos | Where { $_.WmiFilter.Name -eq "Windows 10 Client Filter" } | Select DisplayName
+```
 <br />
 
-#### Get all GPOs which have a description matching a given string:
-- `$object.Gpos | Where { $_.Description -like "*test*" } | Select DisplayName,Description`
+#### Get all matching GPOs which have a description matching a given string:
+```powershell
+$object = Audit-MisconfiguredGpos
+$object.Gpos | Where { $_.Description -like "*test*" } | Select DisplayName,Description
+```
 <br />
 
-#### Get all GPOs which have a blank description, or a uselessly short or generic description:
-- `$object.Gpos | Where { ($_.Description -eq $null) -or ($_.Description -eq "") -or ($_.Description -eq " ") -or ($_.Description.length -lt 1) } | Select DisplayName,Description | Format-Table -AutoSize`
-- `$object.Gpos | Where { $_.Description.length -lt 20 } | Select DisplayName,Description | Format-Table -AutoSize`
-- `$object.Gpos | Where { ($_.DisplayName -like "ENGR*") -and ($_.Description -like "*please do not remove*") } | Select DisplayName,Description | Format-Table -AutoSize`
+#### Get all matching GPOs which have a blank description, a uselessly short or generic description, or a specific given description:
+```powershell
+$object = Audit-MisconfiguredGpos
+# GPOs which have a blank description:
+$object.Gpos | Where { ($_.Description -eq $null) -or ($_.Description -eq "") -or ($_.Description -eq " ") -or ($_.Description.length -lt 1) } | Select DisplayName,Description | Format-Table -AutoSize
+# GPOs which have a short (<20 character) description:
+$object.Gpos | Where { $_.Description.length -lt 20 } | Select DisplayName,Description | Format-Table -AutoSize
+# GPOs which have a description containing specific text:
+$object.Gpos | Where { ($_.DisplayName -like "ENGR*") -and ($_.Description -like "*please do not remove*") } | Select DisplayName,Description | Format-Table -AutoSize
+```
 <br />
 
 ## Examples which are only valid when `-GetFullReports` is specified
@@ -85,24 +112,40 @@ These examples rely on data only gathered when `-GetFullReports` is specified.
 <br />
 
 #### Get all matching GPOs which have links, but all links are disabled:  
-- `$object.Gpos | Where { $_._AllLinksDisabled -eq $true } | Select DisplayName`  
+```powershell
+$object = Audit-MisconfiguredGpos -GetFullReports
+$object.Gpos | Where { $_._AllLinksDisabled -eq $true } | Select DisplayName
+```
 <br />
 
 #### Get all matching GPOs which have links, but at least one link is disabled:  
-- `$object.Gpos | Where { $_._SomeLinksDisabled -eq $true } | Select DisplayName`  
+```powershell
+$object = Audit-MisconfiguredGpos -GetFullReports
+$object.Gpos | Where { $_._SomeLinksDisabled -eq $true } | Select DisplayName
+```
 <br />
 
 #### Get all matching GPOs which have User settings enabled, but have none configured:
-- `$object.Gpos | Where { ($_.User.Enabled -eq "true") -and ($_._UserSettingsConfigured -eq $false) } | Select DisplayName`
+```powershell
+$object = Audit-MisconfiguredGpos -GetFullReports
+$object.Gpos | Where { ($_.User.Enabled -eq "true") -and ($_._UserSettingsConfigured -eq $false) } | Select DisplayName
+```
 <br />
 
 #### Get all matching GPOs which have Computer settings configured, but disabled:
-- `$object.Gpos | Where { ($_._ComputerSettingsConfigured -eq $true) -and ($_.Computer.Enabled -eq "false") } | Select DisplayName`
+```powershell
+$object = Audit-MisconfiguredGpos -GetFullReports
+$object.Gpos | Where { ($_._ComputerSettingsConfigured -eq $true) -and ($_.Computer.Enabled -eq "false") } | Select DisplayName
+```
 <br />
 
 #### Get all matching GPOs which have a specific setting configured:
-- `$object.Gpos | Where { $_._Report.Computer.ExtensionData.Extension.Policy.Name -eq "Require a password when a computer wakes (plugged in)" } | Select DisplayName`
 ```powershell
+$object = Audit-MisconfiguredGpos -GetFullReports
+$object.Gpos | Where { $_._Report.Computer.ExtensionData.Extension.Policy.Name -eq "Require a password when a computer wakes (plugged in)" } | Select DisplayName
+```
+```powershell
+$object = Audit-MisconfiguredGpos -GetFullReports
 $gpos = $object.Gpos | Where { $_._Report.User.ExtensionData.Extension.Policy.Name -eq "Desktop Wallpaper" }
 $gpos | Select DisplayName,
     @{Name="Name";Expression={$_._Report.User.ExtensionData.Extension.Policy.Name}},
@@ -113,6 +156,7 @@ $gpos | Select DisplayName,
 
 #### Get the name and state of all settings which are configured in a specific GPO:
 ```powershell
+$object = Audit-MisconfiguredGpos -GetFullReports
 $gpo = $object.Gpos | Where { $_.Displayname -eq "ENGR EWS Labs General Settings" }
 $gpo._Report.User.ExtensionData.Extension.Policy | Select Name,State
 ```
@@ -120,6 +164,7 @@ $gpo._Report.User.ExtensionData.Extension.Policy | Select Name,State
 
 #### Confirm that both fast and slow methods of counting unlinked GPOs agree on the result:  
 ```powershell
+$object = Audit-MisconfiguredGpos -GetFullReports
 $object.UnlinkedGposCountFast
 ($object.Gpos | Where { ($_._Matches -eq $true) -and ($_._LinksCountFast -eq 0) }).count
 $object.UnlinkedGposCountSlow
@@ -144,15 +189,21 @@ These examples rely on data only gathered when `-GetFullReports` and `-GetDuplic
 <br />
 
 #### Get all matching GPOs which have settings that are identical to settings in other GPOs:
-- Find GPOs with duplicate Computer settings: `$object.Gpos | Where { $_._DuplicateComputerGpos } | Select DisplayName,_DuplicateComputerGpos`
-- Find GPOs with duplicate User settings: `$object.Gpos | Where { $_._DuplicateUserGpos } | Select DisplayName,_DuplicateUserGpos`
-- Find GPOs with both duplicate Computer and User settings: `$object.Gpos | Where { $_._DuplicateBothGpos } | Select DisplayName,_DuplicateBothGpos`
+```powershell
+$object = Audit-MisconfiguredGpos -GetFullReports -GetDuplicates
+# Find GPOs with duplicate Computer settings:
+$object.Gpos | Where { $_._DuplicateComputerGpos } | Select DisplayName,_DuplicateComputerGpos
+# Find GPOs with duplicate User settings:
+$object.Gpos | Where { $_._DuplicateUserGpos } | Select DisplayName,_DuplicateUserGpos
+# Find GPOs with both duplicate Computer and User settings:
+$object.Gpos | Where { $_._DuplicateBothGpos } | Select DisplayName,_DuplicateBothGpos
+```
 
 Note: In my testing I came across two noteworthy scenarios regarding duplicate GPOs:  
 1. Some GPOs which seemingly have no Computer or User settings, still have a vestigial `ExtensionData` node in their GPO report's XML. My assumption is that this is due to the GPOs having originally been configured with settings, but the settings have since been removed, and the XML is simply not entirely cleaned. This appears to be benign as far as the GPO's functionality, however it still causes this module to detect GPOs with identical vestigial data as duplicates. This will not be "fixed" because A) this case is non-trivial to differentiate from legitimately duplicate GPOs and B) this could be considered a misconfiguration, or at least something to investigate, even if it ends up being benign.
-2. There were several GPOs which had identical (actual, non-vestigial) settings configured, but which were disabled. This is likely due to GPOs being decommissioned and re-used without being fully cleared. For example, a GPO might have User settings configured, and is then decommissioned and the User settings are disabled without actually clearing the User settings. The GPO is then reused, leaving the User settings disabled, but configuring Computer settings for the new use case. Again, this is probably benign, but is certainly a misconfiguration, similar to any other GPO which has settings configured but disabled. Ideally, disabled settings which are not actually intended to be used should be removed entirely.
+2. There were several GPOs which had identical (actual, non-vestigial) settings configured, but which were disabled on one of the GPOs. This is likely due to GPOs being decommissioned and re-used without being fully cleared. For example, a GPO might have certain User settings configured, and is then decommissioned and the User settings are disabled without actually clearing the User settings. The GPO is then reused, leaving the User settings disabled, but configuring Computer settings for the new use case. Meanwhile some other GPO is created which configures those same User settings. Again, this is probably benign, but it's certainly a misconfiguration, similar to any other GPO which has settings configured but disabled. Disabled settings which are not actually intended to be used should be removed entirely.
 
-Editorial note: both of the above scenarios are more or less an eventual consequence of our university's distributed IT, multi-tenant, but centrally-managed AD architecture, where college units are not allowed to directly create new GPOs. This incentivizes re-use of existing GPOs.  
+Editorial note: both of the above scenarios are more or less an eventual consequence of our university's distributed IT, multi-tenant, but centrally-managed AD architecture, where edge IT units are not allowed to directly create new GPOs. This incentivizes the re-use of existing GPOs, instead of deleting GPOs and creating new ones.  
 <br />
 
 ## Examples of remediation
@@ -199,7 +250,6 @@ $misconfiguredGpos | ForEach-Object {
 <br />
 
 ### Remove GPOs named like "*X*", but exclude certain GPOs:
-- Note: At UIUC, we (edge IT) don't actually create or remove GPOs, as that is done centrally. This scenario is provided primarily as an example of how to exclude GPOs.
 
 <details>
 <summary><i>Click to expand</i></summary>
