@@ -448,4 +448,5 @@ This is leveraged to identify GPOs which:
 # Notes
 - You can run this as your non-SU account, but you may recieve some errors when the script tries to gather data about campus-level GPOs.
 - If you want something far more powerful and far-reaching, but more complicated and less targeted at Illinois edge IT, then check out [GPOZaurr](https://www.reddit.com/r/PowerShell/comments/l42lc2/the_only_command_you_will_ever_need_to_understand/).
+- Microsoft also recently recent a tool caled PolicyAnalyzer that looks to do a lot of similar things: https://www.microsoft.com/en-us/download/details.aspx?id=55319.
 - By mseng3. See my other projects here: https://github.com/mmseng/code-compendium.
