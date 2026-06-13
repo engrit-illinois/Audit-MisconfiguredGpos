@@ -94,11 +94,17 @@ $object.Gpos | Where { $_._AllLinksDisabled -eq $true } | Select DisplayName
 # GPOs which have links, but at least one link is disabled:
 $object.Gpos | Where { $_._SomeLinksDisabled -eq $true } | Select DisplayName
 
+# GPOs which have Computer settings enabled, but have none configured:
+$object.Gpos | Where { ($_._Report.Computer.Enabled -eq "true") -and ($_._ComputerSettingsConfigured -eq $false) } | Select DisplayName
+
 # GPOs which have User settings enabled, but have none configured:
-$object.Gpos | Where { ($_.User.Enabled -eq "true") -and ($_._UserSettingsConfigured -eq $false) } | Select DisplayName
+$object.Gpos | Where { ($_._Report.User.Enabled -eq "true") -and ($_._UserSettingsConfigured -eq $false) } | Select DisplayName
 
 # GPOs which have Computer settings configured, but disabled:
-$object.Gpos | Where { ($_._ComputerSettingsConfigured -eq $true) -and ($_.Computer.Enabled -eq "false") } | Select DisplayName
+$object.Gpos | Where { ($_._ComputerSettingsConfigured -eq $true) -and ($_._Report.Computer.Enabled -eq "false") } | Select DisplayName
+
+# GPOs which have User settings configured, but disabled:
+$object.Gpos | Where { ($_._UserSettingsConfigured -eq $true) -and ($_._Report.User.Enabled -eq "false") } | Select DisplayName
 
 # GPOs which have a specific setting configured:
 $object.Gpos | Where { $_._Report.Computer.ExtensionData.Extension.Policy.Name -eq "Require a password when a computer wakes (plugged in)" } | Select DisplayName
